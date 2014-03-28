@@ -148,8 +148,9 @@ SVG.scale = function(data) {
 
     /* Draw axis */
     if(SVG.x_axis === true) {
-        SVG.axis.setAttribute('y1', SVG.newCoordinates(0, minY, maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
-        SVG.axis.setAttribute('y2', SVG.newCoordinates(0, minY, maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
+        y = SVG.newCoordinates(0, minY, maxY, 2*SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop);
+        SVG.axis.setAttribute('y1', y);
+        SVG.axis.setAttribute('y2', y);
     }
 
     var returned = new Array();
@@ -251,7 +252,7 @@ SVG.draw = function() {
     /* Draw points */
     for(point = 0; point < SVG.raw_points.length; point++) {
         x.push(SVG.newCoordinates(SVG.raw_points[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.holder.parentElement.offsetWidth - SVG.marginRight));
-        y.push(SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
+        y.push(SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
     }
 
     if(SVG.rounded === true) {
@@ -271,7 +272,7 @@ SVG.draw = function() {
     element.setAttribute('fill', '#3f72bf');
     element.setAttribute('opacity', '0.25');
     element.setAttribute('stroke', 'none');
-    element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' M '+SVG.marginLeft+' '+SVG.marginBottom+' Z');
+    element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+(SVG.holder.parentElement.offsetWidth - SVG.marginRight)+' '+SVG.marginBottom+' Z');
     SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
 
     element = document.createElementNS(SVG.ns, 'path');
