@@ -155,19 +155,77 @@ SVG.addPoints = function (data) {
     }
 }
 
+SVG.getControlPoints = function (data) {
+    // http://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
+    p1 = new Array();
+	p2 = new Array();
+	n = data.length - 1;
+	
+	/*rhs vector*/
+	a = new Array();
+	b = new Array();
+	c = new Array();
+	r = new Array();
+	
+	/*left most segment*/
+	a[0] = 0;
+	b[0] = 2;
+	c[0] = 1;
+	r[0] = data[0] + 2*data[1];
+	
+	/*internal segments*/
+	for (i = 1; i < n - 1; i++) {
+		a[i] = 1;
+		b[i] = 4;
+		c[i] = 1;
+		r[i] = 4 * data[i] + 2 * data[i+1];
+	}
+			
+	/*right segment*/
+	a[n-1] = 2;
+	b[n-1] = 7;
+	c[n-1] = 0;
+	r[n-1] = 8*data[n-1] + data[n];
+	
+	/*solves Ax=b with the Thomas algorithm (from Wikipedia)*/
+	for (i = 1; i < n; i++) {
+		m = a[i]/b[i-1];
+		b[i] = b[i] - m * c[i - 1];
+		r[i] = r[i] - m*r[i-1];
+	}
+ 
+	p1[n-1] = r[n-1]/b[n-1];
+	for (i = n - 2; i >= 0; --i) {
+		p1[i] = (r[i] - c[i] * p1[i+1]) / b[i];
+    }
+		
+	/*we have p1, now compute p2*/
+	for (i=0;i<n-1;i++) {
+		p2[i] = 2*data[i+1] - p1[i+1];
+    }
+	
+	p2[n-1] = 0.5*(data[n] + p1[n-1]);
+	
+	return {p1:p1, p2:p2};
+}
+
 SVG.draw = function() {
-    var points = [];
     var scale = SVG.scale(SVG.raw_points);
+    var x = new Array();
+    var y = new Array();
+    var circle = false;
+    var line = false;
+    var point = false;
 
     /* Draw points */
     for(point in SVG.raw_points) {
-        x = SVG.newCoordinates(SVG.raw_points[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.holder.parentElement.offsetWidth - SVG.marginRight);
-        y = SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop);
+        x.push(SVG.newCoordinates(SVG.raw_points[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.holder.parentElement.offsetWidth - SVG.marginRight));
+        y.push(SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
 
         circle = document.createElementNS(SVG.ns, 'circle');
         circle.setAttribute('class', 'point');
-        circle.setAttribute('cx', x);
-        circle.setAttribute('cy', y);
+        circle.setAttribute('cx', x[point]);
+        circle.setAttribute('cy', y[point]);
         circle.setAttribute('r', 4);
         circle.setAttribute('fill', '#333');
         circle.setAttribute('stroke', '#3f72bf');
@@ -176,22 +234,28 @@ SVG.draw = function() {
 
         circle.addEventListener('mouseover', function() { this.setAttribute('r', '6'); })
         circle.addEventListener('mouseout', function() { this.setAttribute('r', '4'); })
-
-        if(points.length > 0) {
-            last_point = points[points.length - 1];
-
-            line = document.createElementNS(SVG.ns, 'line');
-            line.setAttribute('class', 'line');
-            line.setAttribute('x1', last_point[0]);
-            line.setAttribute('x2', x);
-            line.setAttribute('y1', last_point[1]);
-            line.setAttribute('y2', y);
-            line.setAttribute('stroke', '#3f72bf');
-            line.setAttribute('stroke-width', 2);
-            SVG.g.appendChild(line);
-        }
-        points.push([x, y]);
     }
+    var px = SVG.getControlPoints(x);
+	var py = SVG.getControlPoints(y);
+    var path = '';
+    for(point = 0; point < SVG.raw_points.length - 1; point++) {
+        path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+x[point+1]+' '+y[point+1]+' ';
+    }
+    line = document.createElementNS(SVG.ns, 'path');
+    line.setAttribute('class', 'graph');
+    line.setAttribute('fill', '#3f72bf');
+    line.setAttribute('opacity', '0.25');
+    line.setAttribute('stroke', 'none');
+    line.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' M '+SVG.marginLeft+' '+SVG.marginBottom+' Z');
+    SVG.g.insertBefore(line, SVG.g.querySelectorAll('.point')[0]);
+
+    line = document.createElementNS(SVG.ns, 'path');
+    line.setAttribute('class', 'line');
+    line.setAttribute('stroke', '#3f72bf');
+    line.setAttribute('stroke-width', 2);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('d', 'M '+x[0]+' '+y[0]+' '+path);
+    SVG.g.appendChild(line);
 }
 
 var old = window.onresize || function() {};
@@ -200,7 +264,7 @@ window.onresize = function() {
     if(SVG.g !== false) {
         SVG.g.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
         SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
-        [].forEach.call(SVG.holder.querySelectorAll('.point, .line'), function(el) {
+        [].forEach.call(SVG.holder.querySelectorAll('.point, .line, .graph'), function(el) {
             el.parentElement.removeChild(el);
         });
         SVG.draw();
