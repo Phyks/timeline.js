@@ -11,13 +11,14 @@ SVG.holder = false;
 SVG.g = false;
 SVG.axis = false;
 SVG.raw_points = [];
+SVG.rounded = false;
 
 /* Initialization :
  * id = id of the parent block
  * height / width = size of the svg
  * grid = small / big / both
  */
-SVG.init = function (id, height, width, grid)
+SVG.init = function (id, height, width, grid, rounded)
 {
     var holder = document.getElementById(id);
 
@@ -106,6 +107,8 @@ SVG.init = function (id, height, width, grid)
     SVG.axis.setAttribute('stroke-width', 3);
     SVG.axis.setAttribute('marker-end', 'url("#markerArrow")');
     SVG.g.appendChild(SVG.axis);
+
+    SVG.rounded = rounded;
 }
 
 SVG.newCoordinates = function(value, min, max, minValue, maxValue) {
@@ -150,6 +153,7 @@ SVG.scale = function(data) {
 }
 
 SVG.addPoints = function (data) {
+    // TODO : Sort x croissants
     for(point in data) {
         SVG.raw_points.push([data[point][0], data[point][1]]);
     }
@@ -209,12 +213,12 @@ SVG.getControlPoints = function (data) {
 	return {p1:p1, p2:p2};
 }
 
-SVG.draw = function(rounded) {
+SVG.draw = function() {
     var scale = SVG.scale(SVG.raw_points);
     var x = new Array();
     var y = new Array();
-    var circle = false;
-    var line = false;
+    var element = false;
+    var rect = false;
     var point = false;
     var px = false;
     var py = false;
@@ -224,22 +228,38 @@ SVG.draw = function(rounded) {
     for(point in SVG.raw_points) {
         x.push(SVG.newCoordinates(SVG.raw_points[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.holder.parentElement.offsetWidth - SVG.marginRight));
         y.push(SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
-
-        circle = document.createElementNS(SVG.ns, 'circle');
-        circle.setAttribute('class', 'point');
-        circle.setAttribute('cx', x[point]);
-        circle.setAttribute('cy', y[point]);
-        circle.setAttribute('r', 4);
-        circle.setAttribute('fill', '#333');
-        circle.setAttribute('stroke', '#3f72bf');
-        circle.setAttribute('stroke-width', 2);
-        SVG.g.appendChild(circle);
-
-        circle.addEventListener('mouseover', function() { this.setAttribute('r', '6'); })
-        circle.addEventListener('mouseout', function() { this.setAttribute('r', '4'); })
     }
 
-    if(rounded === true) {
+    for(point = 0; point < SVG.raw_points.length; point++) {
+        rect = document.createElementNS(SVG.ns, 'rect');
+        rect.setAttribute('class', 'over');
+        rect.setAttribute('id', 'over_'+point);
+        if(point == 0) {
+            rect.setAttribute('x', 0);
+        }
+        else {
+            rect.setAttribute('x', (x[point] + x[point - 1]) / 2);
+        }
+        rect.setAttribute('y', 0);
+        rect.setAttribute('fill', 'white');
+        rect.setAttribute('opacity', '0');
+        if(point == SVG.raw_points.length - 1) {
+            rect.setAttribute('width', (x[point] - x[point - 1])/2 + SVG.marginLeft);
+        }
+        else if(point == 0) {
+            rect.setAttribute('width', (x[1] - x[0])/2 + SVG.marginLeft);
+        }
+        else {
+            rect.setAttribute('width', (x[point + 1] - x[point - 1])/2);
+        }
+        rect.setAttribute('height', '100%');
+        SVG.g.appendChild(rect);
+
+        rect.addEventListener('mouseover', function() { SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '6'); })
+        rect.addEventListener('mouseout', function() { SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '4'); })
+    }
+
+    if(SVG.rounded === true) {
         px = SVG.getControlPoints(x);
         py = SVG.getControlPoints(y);
         for(point = 0; point < SVG.raw_points.length - 1; point++) {
@@ -251,21 +271,34 @@ SVG.draw = function(rounded) {
             path += 'L '+x[point]+' '+y[point]+' ';
         }
     }
-    line = document.createElementNS(SVG.ns, 'path');
-    line.setAttribute('class', 'graph');
-    line.setAttribute('fill', '#3f72bf');
-    line.setAttribute('opacity', '0.25');
-    line.setAttribute('stroke', 'none');
-    line.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' M '+SVG.marginLeft+' '+SVG.marginBottom+' Z');
-    SVG.g.insertBefore(line, SVG.g.querySelectorAll('.point')[0]);
+    element = document.createElementNS(SVG.ns, 'path');
+    element.setAttribute('class', 'graph');
+    element.setAttribute('fill', '#3f72bf');
+    element.setAttribute('opacity', '0.25');
+    element.setAttribute('stroke', 'none');
+    element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' M '+SVG.marginLeft+' '+SVG.marginBottom+' Z');
+    SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
 
-    line = document.createElementNS(SVG.ns, 'path');
-    line.setAttribute('class', 'line');
-    line.setAttribute('stroke', '#3f72bf');
-    line.setAttribute('stroke-width', 2);
-    line.setAttribute('fill', 'none');
-    line.setAttribute('d', 'M '+x[0]+' '+y[0]+' '+path);
-    SVG.g.appendChild(line);
+    element = document.createElementNS(SVG.ns, 'path');
+    element.setAttribute('class', 'line');
+    element.setAttribute('stroke', '#3f72bf');
+    element.setAttribute('stroke-width', 2);
+    element.setAttribute('fill', 'none');
+    element.setAttribute('d', 'M '+x[0]+' '+y[0]+' '+path);
+    SVG.g.appendChild(element);
+
+    for(point in SVG.raw_points) {
+        element = document.createElementNS(SVG.ns, 'circle');
+        element.setAttribute('class', 'point');
+        element.setAttribute('id', 'point_'+point);
+        element.setAttribute('cx', x[point]);
+        element.setAttribute('cy', y[point]);
+        element.setAttribute('r', 4);
+        element.setAttribute('fill', '#333');
+        element.setAttribute('stroke', '#3f72bf');
+        element.setAttribute('stroke-width', 2);
+        SVG.g.appendChild(element);
+    }
 }
 
 var old = window.onresize || function() {};
@@ -274,7 +307,7 @@ window.onresize = function() {
     if(SVG.g !== false) {
         SVG.g.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
         SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
-        [].forEach.call(SVG.holder.querySelectorAll('.point, .line, .graph'), function(el) {
+        [].forEach.call(SVG.holder.querySelectorAll('.over, .point, .line, .graph'), function(el) {
             el.parentElement.removeChild(el);
         });
         SVG.draw();
