@@ -199,6 +199,7 @@ window.onresize = function() {
     old();
     if(SVG.g !== false) {
         SVG.g.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
+        SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
         [].forEach.call(SVG.holder.querySelectorAll('.point, .line'), function(el) {
             el.parentElement.removeChild(el);
         });
