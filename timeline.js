@@ -6,20 +6,21 @@ SVG.marginBottom = 10;
 SVG.marginTop = 10;
 SVG.marginLeft = 10;
 SVG.marginRight = 10;
+SVG.rounded = false;
+SVG.x_axis = false;
 
 SVG.holder = false;
 SVG.g = false;
 SVG.axis = false;
 SVG.raw_points = [];
 SVG.labels = [];
-SVG.rounded = false;
 
 /* Initialization :
  * id = id of the parent block
  * height / width = size of the svg
  * grid = small / big / both
  */
-SVG.init = function (id, height, width, grid, rounded)
+SVG.init = function (id, height, width, grid, x_axis, rounded)
 {
     var holder = document.getElementById(id);
 
@@ -102,15 +103,18 @@ SVG.init = function (id, height, width, grid, rounded)
     SVG.g.setAttribute('transform', 'translate(0, ' + holder.offsetHeight + ') scale(1, -1)');
     SVG.holder.appendChild(SVG.g);
 
-    SVG.axis = document.createElementNS(SVG.ns, 'line');
-    SVG.axis.setAttribute('x1', SVG.marginLeft);
-    SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
-    SVG.axis.setAttribute('stroke', 'gray');
-    SVG.axis.setAttribute('stroke-width', 3);
-    SVG.axis.setAttribute('marker-end', 'url("#markerArrow")');
-    SVG.g.appendChild(SVG.axis);
+    if(x_axis === true) {
+        SVG.axis = document.createElementNS(SVG.ns, 'line');
+        SVG.axis.setAttribute('x1', SVG.marginLeft);
+        SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
+        SVG.axis.setAttribute('stroke', 'gray');
+        SVG.axis.setAttribute('stroke-width', 3);
+        SVG.axis.setAttribute('marker-end', 'url("#markerArrow")');
+        SVG.g.appendChild(SVG.axis);
+    }
 
     SVG.rounded = rounded;
+    SVG.x_axis = x_axis;
 }
 
 SVG.newCoordinates = function(value, min, max, minValue, maxValue) {
@@ -143,8 +147,10 @@ SVG.scale = function(data) {
     }
 
     /* Draw axis */
-    SVG.axis.setAttribute('y1', SVG.newCoordinates(0, minY, maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
-    SVG.axis.setAttribute('y2', SVG.newCoordinates(0, minY, maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
+    if(SVG.x_axis === true) {
+        SVG.axis.setAttribute('y1', SVG.newCoordinates(0, minY, maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
+        SVG.axis.setAttribute('y2', SVG.newCoordinates(0, minY, maxY, SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
+    }
 
     var returned = new Array();
     returned['minX'] = minX;
@@ -336,7 +342,9 @@ window.onresize = function() {
     old();
     if(SVG.g !== false) {
         SVG.g.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
-        SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
+        if(SVG.x_axis === true) {
+            SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
+        }
         [].forEach.call(SVG.holder.querySelectorAll('.label, .over, .point, .line, .graph'), function(el) {
             el.parentElement.removeChild(el);
         });
