@@ -298,13 +298,23 @@ SVG.draw = function() {
         if(SVG.labels[point] !== '') {
             element = document.createElementNS(SVG.ns, 'text');
             element.setAttribute('class', 'label');
-            element.setAttribute('display', 'none');
             element.setAttribute('id', 'label_'+point);
-            element.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
-            element.setAttribute('x', x[point]);
-            element.setAttribute('y', SVG.holder.parentElement.offsetHeight - y[point]);
             element.innerHTML = SVG.labels[point];
+            element.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
             SVG.g.appendChild(element);
+            if(x[point] + element.getBoundingClientRect().width / 2 > SVG.holder.parentElement.offsetWidth) {
+                element.setAttribute('x', x[point] - element.getBoundingClientRect().width - 10);
+                element.setAttribute('y', SVG.holder.parentElement.offsetHeight - y[point] + 5);
+            }
+            else if(x[point] - element.getBoundingClientRect().width / 2 < 0) {
+                element.setAttribute('x', x[point] + 10);
+                element.setAttribute('y', SVG.holder.parentElement.offsetHeight - y[point] + 5);
+            }
+            else {
+                element.setAttribute('x', x[point] - element.getBoundingClientRect().width / 2);
+                element.setAttribute('y', SVG.holder.parentElement.offsetHeight - y[point] - 10);
+            }
+            element.setAttribute('display', 'none');
         }
     }
 
