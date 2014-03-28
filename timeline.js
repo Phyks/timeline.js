@@ -209,13 +209,16 @@ SVG.getControlPoints = function (data) {
 	return {p1:p1, p2:p2};
 }
 
-SVG.draw = function() {
+SVG.draw = function(rounded) {
     var scale = SVG.scale(SVG.raw_points);
     var x = new Array();
     var y = new Array();
     var circle = false;
     var line = false;
     var point = false;
+    var px = false;
+    var py = false;
+    var path = '';
 
     /* Draw points */
     for(point in SVG.raw_points) {
@@ -235,11 +238,18 @@ SVG.draw = function() {
         circle.addEventListener('mouseover', function() { this.setAttribute('r', '6'); })
         circle.addEventListener('mouseout', function() { this.setAttribute('r', '4'); })
     }
-    var px = SVG.getControlPoints(x);
-	var py = SVG.getControlPoints(y);
-    var path = '';
-    for(point = 0; point < SVG.raw_points.length - 1; point++) {
-        path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+x[point+1]+' '+y[point+1]+' ';
+
+    if(rounded === true) {
+        px = SVG.getControlPoints(x);
+        py = SVG.getControlPoints(y);
+        for(point = 0; point < SVG.raw_points.length - 1; point++) {
+            path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+x[point+1]+' '+y[point+1]+' ';
+        }
+    }
+    else {
+        for(point = 1; point < SVG.raw_points.length; point++) {
+            path += 'L '+x[point]+' '+y[point]+' ';
+        }
     }
     line = document.createElementNS(SVG.ns, 'path');
     line.setAttribute('class', 'graph');
