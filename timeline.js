@@ -161,7 +161,17 @@ SVG.scale = function(data) {
 }
 
 SVG.addPoints = function (data) {
-    // TODO : Sort x croissants
+    data.sort(function (a, b) {
+        if(a.x < b.x) {
+            return -1;
+        }
+        else if(a.x == b.x) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    });
     for(point = 0; point < data.length; point++) {
         SVG.raw_points.push([data[point].x, data[point].y]);
         if(data[point].label !== 'undefined') {
