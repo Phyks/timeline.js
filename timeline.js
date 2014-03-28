@@ -3,7 +3,7 @@ SVG.ns = "http://www.w3.org/2000/svg";
 SVG.xlinkns = "http://www.w3.org/1999/xlink";
 
 SVG.marginBottom = 10;
-SVG.marginTop = 10;
+SVG.marginTop = 15;
 SVG.marginLeft = 10;
 SVG.marginRight = 10;
 SVG.rounded = false;
@@ -296,25 +296,48 @@ SVG.draw = function() {
         SVG.g.appendChild(element);
 
         if(SVG.labels[point] !== '') {
+            var g = document.createElementNS(SVG.ns, 'g');
+            g.setAttribute('class', 'label');
+            g.setAttribute('id', 'label_'+point);
+            g.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
+            SVG.g.appendChild(g);
+
             element = document.createElementNS(SVG.ns, 'text');
-            element.setAttribute('class', 'label');
-            element.setAttribute('id', 'label_'+point);
-            element.innerHTML = SVG.labels[point];
-            element.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
-            SVG.g.appendChild(element);
-            if(x[point] + element.getBoundingClientRect().width / 2 > SVG.holder.parentElement.offsetWidth) {
-                element.setAttribute('x', x[point] - element.getBoundingClientRect().width - 10);
-                element.setAttribute('y', SVG.holder.parentElement.offsetHeight - y[point] + 5);
+            element.innerHTML = SVG.labels[point].replace(/(<([^>]+)>)/ig, '');
+
+            var path = document.createElementNS(SVG.ns, 'path');
+            path.setAttribute('stroke', 'black');
+            path.setAttribute('stroke-width', 2);
+            path.setAttribute('fill', 'white');
+            path.setAttribute('opacity', 0.5);
+
+            // Append here to have them with the good z-index, update their attributes later
+            g.appendChild(path);
+            g.appendChild(element);
+
+            var x_text = x[point] - element.getBoundingClientRect().width / 2;
+            var y_text = SVG.holder.parentElement.offsetHeight - y[point] - 20;
+            var element_width = element.getBoundingClientRect().width;
+            var element_height = element.getBoundingClientRect().height;
+
+            if(x[point] + element_width / 2 > SVG.holder.parentElement.offsetWidth) {
+                x_text = x[point] - element_width - 20;
+                y_text = SVG.holder.parentElement.offsetHeight - y[point] + 5;
+                path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
             }
             else if(x[point] - element.getBoundingClientRect().width / 2 < 0) {
-                element.setAttribute('x', x[point] + 10);
-                element.setAttribute('y', SVG.holder.parentElement.offsetHeight - y[point] + 5);
+                x_text = x[point] + 20;
+                y_text = SVG.holder.parentElement.offsetHeight - y[point] + 5;
+                path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
             }
             else {
-                element.setAttribute('x', x[point] - element.getBoundingClientRect().width / 2);
-                element.setAttribute('y', SVG.holder.parentElement.offsetHeight - y[point] - 10);
+                path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' L '+(x_text + element_width/2 + 2.5)+' '+(y_text + 5)+' L '+(x_text + element_width/2)+' '+(y_text + 10)+' L '+(x_text + element_width/2 - 2.5)+' '+(y_text + 5)+' Z');
             }
-            element.setAttribute('display', 'none');
+            element.setAttribute('x', x_text);
+            element.setAttribute('y', y_text);
+ 
+
+            g.setAttribute('display', 'none');
         }
     }
 
