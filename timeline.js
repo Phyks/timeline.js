@@ -341,7 +341,7 @@ SVG.draw = function() {
         element.setAttribute('fill', SVG.raw_points[graph].color);
         element.setAttribute('opacity', '0.25');
         element.setAttribute('stroke', 'none');
-        element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+SVG.marginBottom+' Z');
+        element.setAttribute('d', 'M '+SVG.marginLeft+' '+2*SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+2*SVG.marginBottom+' Z');
         SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
 
         element = document.createElementNS(SVG.ns, 'path');
