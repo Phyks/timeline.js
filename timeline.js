@@ -81,14 +81,6 @@ SVG.init = function (id, height, width, grid, x_axis, rounded)
     }
     SVG.grid = grid;
 
-    if(SVG.grid !== "none") {
-        var grid = document.createElementNS(SVG.ns, 'rect');
-        grid.setAttribute('width', "2000");
-        grid.setAttribute('height', "2000");
-        grid.setAttribute('y', "-20");
-        grid.setAttribute('fill', 'url(#grid)');
-        SVG.holder.appendChild(grid);
-    }
 
     var marker = document.createElementNS(SVG.ns, 'marker');
     marker.setAttribute('id', 'markerArrow');
@@ -115,6 +107,19 @@ SVG.init = function (id, height, width, grid, x_axis, rounded)
         SVG.axis.setAttribute('stroke-width', 3);
         SVG.axis.setAttribute('marker-end', 'url("#markerArrow")');
         SVG.g.appendChild(SVG.axis);
+    }
+
+    if(SVG.grid !== "none") {
+        var grid = document.createElementNS(SVG.ns, 'rect');
+        grid.setAttribute('width', "100%");
+        grid.setAttribute('height', "100%");
+        if(SVG.grid === 'big' || SVG.grid === 'both') {
+            grid.setAttribute('fill', 'url(#grid)');
+        }
+        else {
+            grid.setAttribute('fill', 'url(#smallGrid)');
+        }
+        SVG.g.appendChild(grid);
     }
 
     SVG.rounded = rounded;
@@ -148,6 +153,29 @@ SVG.scale = function(data) {
         if(y > maxY || maxY === false) {
             maxY = y;
         }
+    }
+
+    y = SVG.newCoordinates(minY+Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop) - SVG.newCoordinates(minY, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop);
+    if(SVG.grid === 'big' || SVG.grid === 'both') {
+        SVG.holder.getElementById('grid').setAttribute('width', y);
+        SVG.holder.getElementById('grid').setAttribute('height', y);
+        SVG.holder.getElementById('grid').setAttribute('y', SVG.newCoordinates(Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
+        SVG.holder.getElementById('grid').querySelector('path').setAttribute('d', 'M '+y+' 0 L 0 0 0 '+y);
+
+        if(SVG.grid === 'both') {
+            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('width', y);
+            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('height', y);
+        }
+    }
+    if(SVG.grid === 'small' || SVG.grid === 'both') {
+        y = y / 10;
+        SVG.holder.getElementById('smallGrid').setAttribute('width', y);
+        SVG.holder.getElementById('smallGrid').setAttribute('height', y);
+        if(SVG.grid === 'small') {
+            SVG.holder.getElementById('smallGrid').setAttribute('y', SVG.newCoordinates(Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
+        }
+        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+y+' 0 L 0 0 0 '+y);
+        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+y+' 0 L 0 0 0 '+y);
     }
 
     /* Draw axis */
@@ -311,6 +339,7 @@ SVG.draw = function() {
             var i = 0;
             var tmp = false;
             for(i = 0; i < text.length; i++) {
+                text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%v', SVG.raw_points[point][1]);
                 if(i % 2 == 0) {
                     element.appendChild(document.createTextNode(text[i]));
 
