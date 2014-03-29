@@ -23,6 +23,9 @@ SVG.labels = [];
  */
 SVG.init = function (id, height, width, grid, x_axis, rounded)
 {
+    if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
+        alert("Your browser does not support embedded SVG.");
+    }
     SVG.parent_holder = document.getElementById(id);
 
     var svg = document.createElementNS(SVG.ns, 'svg:svg');
