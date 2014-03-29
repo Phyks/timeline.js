@@ -9,6 +9,7 @@ SVG.marginRight = 10;
 SVG.rounded = false;
 SVG.x_axis = false;
 
+SVG.parent_holder = false;
 SVG.holder = false;
 SVG.g = false;
 SVG.axis = false;
@@ -22,15 +23,15 @@ SVG.labels = [];
  */
 SVG.init = function (id, height, width, grid, x_axis, rounded)
 {
-    var holder = document.getElementById(id);
+    SVG.parent_holder = document.getElementById(id);
 
     var svg = document.createElementNS(SVG.ns, 'svg:svg');
     svg.setAttribute('width', width);
     svg.setAttribute('height', height);
     svg.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xlink', SVG.xlinkns);
-    holder.appendChild(svg);
+    SVG.parent_holder.appendChild(svg);
 
-    SVG.holder = holder.querySelector('svg');
+    SVG.holder = SVG.parent_holder.querySelector('svg');
 
     var defs = document.createElementNS(SVG.ns, 'defs');
     SVG.holder.appendChild(defs);
@@ -100,13 +101,13 @@ SVG.init = function (id, height, width, grid, x_axis, rounded)
     defs.appendChild(marker);
 
     SVG.g = document.createElementNS(SVG.ns, 'g');
-    SVG.g.setAttribute('transform', 'translate(0, ' + holder.offsetHeight + ') scale(1, -1)');
+    SVG.g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
     SVG.holder.appendChild(SVG.g);
 
     if(x_axis === true) {
         SVG.axis = document.createElementNS(SVG.ns, 'line');
         SVG.axis.setAttribute('x1', SVG.marginLeft);
-        SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
+        SVG.axis.setAttribute('x2', SVG.parent_holder.offsetWidth - 13 - SVG.marginRight);
         SVG.axis.setAttribute('stroke', 'gray');
         SVG.axis.setAttribute('stroke-width', 3);
         SVG.axis.setAttribute('marker-end', 'url("#markerArrow")');
@@ -148,7 +149,7 @@ SVG.scale = function(data) {
 
     /* Draw axis */
     if(SVG.x_axis === true) {
-        y = SVG.newCoordinates(0, minY, maxY, 2*SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop);
+        y = SVG.newCoordinates(0, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop);
         SVG.axis.setAttribute('y1', y);
         SVG.axis.setAttribute('y2', y);
     }
@@ -251,8 +252,8 @@ SVG.draw = function() {
 
     /* Draw points */
     for(point = 0; point < SVG.raw_points.length; point++) {
-        x.push(SVG.newCoordinates(SVG.raw_points[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.holder.parentElement.offsetWidth - SVG.marginRight));
-        y.push(SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.holder.parentElement.offsetHeight - SVG.marginTop));
+        x.push(SVG.newCoordinates(SVG.raw_points[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
+        y.push(SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
     }
 
     if(SVG.rounded === true) {
@@ -272,7 +273,7 @@ SVG.draw = function() {
     element.setAttribute('fill', '#3f72bf');
     element.setAttribute('opacity', '0.25');
     element.setAttribute('stroke', 'none');
-    element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+(SVG.holder.parentElement.offsetWidth - SVG.marginRight)+' '+SVG.marginBottom+' Z');
+    element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+(SVG.parent_holder.offsetWidth - SVG.marginRight)+' '+SVG.marginBottom+' Z');
     SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
 
     element = document.createElementNS(SVG.ns, 'path');
@@ -299,11 +300,25 @@ SVG.draw = function() {
             var g = document.createElementNS(SVG.ns, 'g');
             g.setAttribute('class', 'label');
             g.setAttribute('id', 'label_'+point);
-            g.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
+            g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
             SVG.g.appendChild(g);
 
             element = document.createElementNS(SVG.ns, 'text');
-            element.innerHTML = SVG.labels[point].replace(/(<([^>]+)>)/ig, '');
+            var text = SVG.labels[point].replace('</sup>', '<sup>').split('<sup>');
+            var i = 0;
+            var tmp = false;
+            for(i = 0; i < text.length; i++) {
+                if(i % 2 == 0) {
+                    element.appendChild(document.createTextNode(text[i]));
+
+                }
+                else {
+                    tmp = document.createElementNS(SVG.ns, 'tspan');
+                    tmp.setAttribute('dy', '-5');
+                    tmp.appendChild(document.createTextNode(text[i]));
+                    element.appendChild(tmp);
+                }
+            }
 
             var path = document.createElementNS(SVG.ns, 'path');
             path.setAttribute('stroke', 'black');
@@ -316,18 +331,18 @@ SVG.draw = function() {
             g.appendChild(element);
 
             var x_text = x[point] - element.getBoundingClientRect().width / 2;
-            var y_text = SVG.holder.parentElement.offsetHeight - y[point] - 20;
+            var y_text = SVG.parent_holder.offsetHeight - y[point] - 20;
             var element_width = element.getBoundingClientRect().width;
             var element_height = element.getBoundingClientRect().height;
 
-            if(x[point] + element_width / 2 > SVG.holder.parentElement.offsetWidth) {
+            if(x[point] + element_width / 2 > SVG.parent_holder.offsetWidth) {
                 x_text = x[point] - element_width - 20;
-                y_text = SVG.holder.parentElement.offsetHeight - y[point] + 5;
+                y_text = SVG.parent_holder.offsetHeight - y[point] + 5;
                 path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
             }
             else if(x[point] - element.getBoundingClientRect().width / 2 < 0) {
                 x_text = x[point] + 20;
-                y_text = SVG.holder.parentElement.offsetHeight - y[point] + 5;
+                y_text = SVG.parent_holder.offsetHeight - y[point] + 5;
                 path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
             }
             else {
@@ -369,7 +384,7 @@ SVG.draw = function() {
         rect.addEventListener('mouseover', function() {
             SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '6');
             if(SVG.labels[parseInt(this.getAttribute('id').replace('over_', ''))] !== '') {
-                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', '');
+                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', 'block');
             }
         })
         rect.addEventListener('mouseout', function() {
@@ -385,12 +400,12 @@ var old = window.onresize || function() {};
 window.onresize = function() {
     old();
     if(SVG.g !== false) {
-        SVG.g.setAttribute('transform', 'translate(0, ' + SVG.holder.parentElement.offsetHeight + ') scale(1, -1)');
+        SVG.g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
         if(SVG.x_axis === true) {
-            SVG.axis.setAttribute('x2', holder.offsetWidth - 13 - SVG.marginRight);
+            SVG.axis.setAttribute('x2', SVG.parent_holder.offsetWidth - 13 - SVG.marginRight);
         }
         [].forEach.call(SVG.holder.querySelectorAll('.label, .over, .point, .line, .graph'), function(el) {
-            el.parentElement.removeChild(el);
+            el.parentNode.removeChild(el);
         });
         SVG.draw();
     }
