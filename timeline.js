@@ -132,50 +132,74 @@ SVG.newCoordinates = function(value, min, max, minValue, maxValue) {
 }
 
 SVG.scale = function(data) {
-    var minX = false, minY = 0;
-    var maxX = false, maxY = false;
+    var minX = new Array(), minY = new Array();
+    var maxX = new Array(), maxY = new Array();
     var x = 0, y = 0;
     var circle = false, last_point = false, line = false;
 
-    for(point = 0; point < data.length; point++) {
-        x = data[point][0];
-        y = data[point][1];
+    var tmp_minX = false;
+    var tmp_minY = 0;
+    var tmp_maxX = false;
+    var tmp_maxY = false;
 
-        if(x < minX || minX === false) {
-            minX = x;
+    for(graph in data) {
+        tmp_minX = false;
+        tmp_minY = 0;
+        tmp_maxX = false;
+        tmp_maxY = false;
+
+        for(point = 0; point < data[graph].data.length; point++) {
+            x = data[graph].data[point][0];
+            y = data[graph].data[point][1];
+
+            if(x < tmp_minX || tmp_minX === false) {
+                tmp_minX = x;
+            }
+            if(x > tmp_maxX || tmp_maxX === false) {
+                tmp_maxX = x;
+            }
+            if(y < tmp_minY) {
+                tmp_minY = y;
+            }
+            if(y > tmp_maxY || tmp_maxY === false) {
+                tmp_maxY = y;
+            }
         }
-        if(x > maxX || maxX === false) {
-            maxX = x;
-        }
-        if(y < minY) {
-            minY = y;
-        }
-        if(y > maxY || maxY === false) {
-            maxY = y;
-        }
+        minX.push(tmp_minX);
+        minY.push(tmp_minY);
+        maxX.push(tmp_maxX);
+        maxY.push(tmp_maxY);
     }
 
+    minX = Math.min.apply(null, minX);
+    minY = Math.min.apply(null, minY);
+    maxX = Math.max.apply(null, maxX);
+    maxY = Math.max.apply(null, maxY);
+
+    x = SVG.newCoordinates(minX+Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight) - SVG.newCoordinates(minX, minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight);
     y = SVG.newCoordinates(minY+Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop) - SVG.newCoordinates(minY, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop);
     if(SVG.grid === 'big' || SVG.grid === 'both') {
-        SVG.holder.getElementById('grid').setAttribute('width', y);
+        SVG.holder.getElementById('grid').setAttribute('width', x);
         SVG.holder.getElementById('grid').setAttribute('height', y);
         SVG.holder.getElementById('grid').setAttribute('y', SVG.newCoordinates(Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
-        SVG.holder.getElementById('grid').querySelector('path').setAttribute('d', 'M '+y+' 0 L 0 0 0 '+y);
+        SVG.holder.getElementById('grid').setAttribute('x', SVG.newCoordinates(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
+        SVG.holder.getElementById('grid').querySelector('path').setAttribute('d', 'M '+x+' 0 L 0 0 0 '+y);
 
         if(SVG.grid === 'both') {
-            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('width', y);
+            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('width', x);
             SVG.holder.getElementById('grid').querySelector('rect').setAttribute('height', y);
         }
     }
     if(SVG.grid === 'small' || SVG.grid === 'both') {
+        x = x / 10;
         y = y / 10;
-        SVG.holder.getElementById('smallGrid').setAttribute('width', y);
+        SVG.holder.getElementById('smallGrid').setAttribute('width', x);
         SVG.holder.getElementById('smallGrid').setAttribute('height', y);
         if(SVG.grid === 'small') {
             SVG.holder.getElementById('smallGrid').setAttribute('y', SVG.newCoordinates(Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
+        SVG.holder.getElementById('smallGrid').setAttribute('x', SVG.newCoordinates(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
         }
-        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+y+' 0 L 0 0 0 '+y);
-        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+y+' 0 L 0 0 0 '+y);
+        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+x+' 0 L 0 0 0 '+y);
     }
 
     /* Draw axis */
@@ -193,7 +217,15 @@ SVG.scale = function(data) {
     return returned;
 }
 
-SVG.addPoints = function (data) {
+SVG.addGraph = function (graph, color) {
+    SVG.raw_points[graph] = {};
+    SVG.raw_points[graph].color = color;
+    SVG.raw_points[graph].data = new Array();
+
+    SVG.labels[graph] = new Array();
+};
+
+SVG.addPoints = function (graph, data) {
     data.sort(function (a, b) {
         if(a.x < b.x) {
             return -1;
@@ -205,13 +237,14 @@ SVG.addPoints = function (data) {
             return 1;
         }
     });
+
     for(point = 0; point < data.length; point++) {
-        SVG.raw_points.push([data[point].x, data[point].y]);
+        SVG.raw_points[graph].data.push([data[point].x, data[point].y]);
         if(data[point].label !== 'undefined') {
-            SVG.labels.push(data[point].label);
+            SVG.labels[graph].push(data[point].label);
         }
         else {
-            SVG.labels.push('');
+            SVG.labels[graph].push('');
         }
     }
 }
@@ -281,150 +314,160 @@ SVG.draw = function() {
     var py = false;
     var path = '';
 
-    /* Draw points */
-    for(point = 0; point < SVG.raw_points.length; point++) {
-        x.push(SVG.newCoordinates(SVG.raw_points[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
-        y.push(SVG.newCoordinates(SVG.raw_points[point][1], scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
-    }
-
-    if(SVG.rounded === true) {
-        px = SVG.getControlPoints(x);
-        py = SVG.getControlPoints(y);
-        for(point = 0; point < SVG.raw_points.length - 1; point++) {
-            path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+x[point+1]+' '+y[point+1]+' ';
+    for(graph in SVG.raw_points) {
+        x = new Array();
+        y = new Array();
+        path = '';
+        /* Draw points */
+        for(point = 0; point < SVG.raw_points[graph].data.length; point++) {
+            x.push(SVG.newCoordinates(SVG.raw_points[graph].data[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
+            y.push(SVG.newCoordinates(SVG.raw_points[graph].data[point][1], scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
         }
-    }
-    else {
-        for(point = 1; point < SVG.raw_points.length; point++) {
-            path += 'L '+x[point]+' '+y[point]+' ';
+
+        if(SVG.rounded === true) {
+            px = SVG.getControlPoints(x);
+            py = SVG.getControlPoints(y);
+            for(point = 0; point < SVG.raw_points[graph].data.length - 1; point++) {
+                path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+x[point+1]+' '+y[point+1]+' ';
+            }
         }
-    }
-    element = document.createElementNS(SVG.ns, 'path');
-    element.setAttribute('class', 'graph');
-    element.setAttribute('fill', '#3f72bf');
-    element.setAttribute('opacity', '0.25');
-    element.setAttribute('stroke', 'none');
-    element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+(SVG.parent_holder.offsetWidth - SVG.marginRight)+' '+SVG.marginBottom+' Z');
-    SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
+        else {
+            for(point = 1; point < SVG.raw_points[graph].data.length; point++) {
+                path += 'L '+x[point]+' '+y[point]+' ';
+            }
+        }
+        element = document.createElementNS(SVG.ns, 'path');
+        element.setAttribute('class', 'graph');
+        element.setAttribute('fill', SVG.raw_points[graph].color);
+        element.setAttribute('opacity', '0.25');
+        element.setAttribute('stroke', 'none');
+        element.setAttribute('d', 'M '+SVG.marginLeft+' '+SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+SVG.marginBottom+' Z');
+        SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
 
-    element = document.createElementNS(SVG.ns, 'path');
-    element.setAttribute('class', 'line');
-    element.setAttribute('stroke', '#3f72bf');
-    element.setAttribute('stroke-width', 2);
-    element.setAttribute('fill', 'none');
-    element.setAttribute('d', 'M '+x[0]+' '+y[0]+' '+path);
-    SVG.g.appendChild(element);
-
-    for(point = 0; point < SVG.raw_points.length; point++) {
-        element = document.createElementNS(SVG.ns, 'circle');
-        element.setAttribute('class', 'point');
-        element.setAttribute('id', 'point_'+point);
-        element.setAttribute('cx', x[point]);
-        element.setAttribute('cy', y[point]);
-        element.setAttribute('r', 4);
-        element.setAttribute('fill', '#333');
-        element.setAttribute('stroke', '#3f72bf');
+        element = document.createElementNS(SVG.ns, 'path');
+        element.setAttribute('class', 'line');
+        element.setAttribute('stroke', SVG.raw_points[graph].color);
         element.setAttribute('stroke-width', 2);
+        element.setAttribute('fill', 'none');
+        element.setAttribute('d', 'M '+x[0]+' '+y[0]+' '+path);
         SVG.g.appendChild(element);
 
-        if(SVG.labels[point] !== '') {
-            var g = document.createElementNS(SVG.ns, 'g');
-            g.setAttribute('class', 'label');
-            g.setAttribute('id', 'label_'+point);
-            g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
-            SVG.g.appendChild(g);
+        for(point = 0; point < SVG.raw_points[graph].data.length; point++) {
+            element = document.createElementNS(SVG.ns, 'circle');
+            element.setAttribute('class', 'point');
+            element.setAttribute('id', 'point_'+point+'_'+graph);
+            element.setAttribute('cx', x[point]);
+            element.setAttribute('cy', y[point]);
+            element.setAttribute('r', 4);
+            element.setAttribute('fill', '#333');
+            element.setAttribute('stroke', SVG.raw_points[graph].color);
+            element.setAttribute('stroke-width', 2);
+            SVG.g.appendChild(element);
 
-            element = document.createElementNS(SVG.ns, 'text');
-            var text = SVG.labels[point].replace('</sup>', '<sup>').split('<sup>');
-            var i = 0;
-            var tmp = false;
-            for(i = 0; i < text.length; i++) {
-                text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%v', SVG.raw_points[point][1]);
-                if(i % 2 == 0) {
-                    element.appendChild(document.createTextNode(text[i]));
+            if(SVG.labels[graph][point] !== '') {
+                var g = document.createElementNS(SVG.ns, 'g');
+                g.setAttribute('class', 'label');
+                g.setAttribute('id', 'label_'+point+'_'+graph);
+                g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
+                SVG.g.appendChild(g);
 
+                element = document.createElementNS(SVG.ns, 'text');
+                var text = SVG.labels[graph][point].replace('</sup>', '<sup>').split('<sup>');
+                var i = 0;
+                var tmp = false;
+                for(i = 0; i < text.length; i++) {
+                    text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%y', SVG.raw_points[graph].data[point][1]).replace('%x', SVG.raw_points[graph].data[point][0]);
+                    if(i % 2 == 0) {
+                        element.appendChild(document.createTextNode(text[i]));
+
+                    }
+                    else {
+                        tmp = document.createElementNS(SVG.ns, 'tspan');
+                        tmp.setAttribute('dy', '-5');
+                        tmp.appendChild(document.createTextNode(text[i]));
+                        element.appendChild(tmp);
+                    }
+                }
+
+                var path = document.createElementNS(SVG.ns, 'path');
+                path.setAttribute('stroke', 'black');
+                path.setAttribute('stroke-width', 2);
+                path.setAttribute('fill', 'white');
+                path.setAttribute('opacity', 0.5);
+
+                // Append here to have them with the good z-index, update their attributes later
+                g.appendChild(path);
+                g.appendChild(element);
+
+                var x_text = x[point] - element.getBoundingClientRect().width / 2;
+                var y_text = SVG.parent_holder.offsetHeight - y[point] - 20;
+                var element_width = element.getBoundingClientRect().width;
+                var element_height = element.getBoundingClientRect().height;
+
+                if(x[point] + element_width / 2 > SVG.parent_holder.offsetWidth) {
+                    x_text = x[point] - element_width - 20;
+                    y_text = SVG.parent_holder.offsetHeight - y[point] + 5;
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+                }
+                else if(x[point] - element.getBoundingClientRect().width / 2 < 0) {
+                    x_text = x[point] + 20;
+                    y_text = SVG.parent_holder.offsetHeight - y[point] + 5;
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+                }
+                else if(y[point] + element.getBoundingClientRect().height > SVG.parent_holder.offsetHeight) {
+                    x_text = x[point] + 20;
+                    y_text = SVG.parent_holder.offsetHeight - y[point] + 5;
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
                 }
                 else {
-                    tmp = document.createElementNS(SVG.ns, 'tspan');
-                    tmp.setAttribute('dy', '-5');
-                    tmp.appendChild(document.createTextNode(text[i]));
-                    element.appendChild(tmp);
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' L '+(x_text + element_width/2 + 2.5)+' '+(y_text + 5)+' L '+(x_text + element_width/2)+' '+(y_text + 10)+' L '+(x_text + element_width/2 - 2.5)+' '+(y_text + 5)+' Z');
                 }
+                element.setAttribute('x', x_text);
+                element.setAttribute('y', y_text);
+    
+
+                g.setAttribute('display', 'none');
             }
+        }
 
-            var path = document.createElementNS(SVG.ns, 'path');
-            path.setAttribute('stroke', 'black');
-            path.setAttribute('stroke-width', 2);
-            path.setAttribute('fill', 'white');
-            path.setAttribute('opacity', 0.5);
-
-            // Append here to have them with the good z-index, update their attributes later
-            g.appendChild(path);
-            g.appendChild(element);
-
-            var x_text = x[point] - element.getBoundingClientRect().width / 2;
-            var y_text = SVG.parent_holder.offsetHeight - y[point] - 20;
-            var element_width = element.getBoundingClientRect().width;
-            var element_height = element.getBoundingClientRect().height;
-
-            if(x[point] + element_width / 2 > SVG.parent_holder.offsetWidth) {
-                x_text = x[point] - element_width - 20;
-                y_text = SVG.parent_holder.offsetHeight - y[point] + 5;
-                path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
-            }
-            else if(x[point] - element.getBoundingClientRect().width / 2 < 0) {
-                x_text = x[point] + 20;
-                y_text = SVG.parent_holder.offsetHeight - y[point] + 5;
-                path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+        for(point = 0; point < SVG.raw_points[graph].data.length; point++) {
+            rect = document.createElementNS(SVG.ns, 'rect');
+            rect.setAttribute('class', 'over');
+            rect.setAttribute('id', 'over_'+point+'_'+graph);
+            if(point == 0) {
+                rect.setAttribute('x', 0);
             }
             else {
-                path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' L '+(x_text + element_width/2 + 2.5)+' '+(y_text + 5)+' L '+(x_text + element_width/2)+' '+(y_text + 10)+' L '+(x_text + element_width/2 - 2.5)+' '+(y_text + 5)+' Z');
+                rect.setAttribute('x', (x[point] + x[point - 1]) / 2);
             }
-            element.setAttribute('x', x_text);
-            element.setAttribute('y', y_text);
- 
-
-            g.setAttribute('display', 'none');
-        }
-    }
-
-    for(point = 0; point < SVG.raw_points.length; point++) {
-        rect = document.createElementNS(SVG.ns, 'rect');
-        rect.setAttribute('class', 'over');
-        rect.setAttribute('id', 'over_'+point);
-        if(point == 0) {
-            rect.setAttribute('x', 0);
-        }
-        else {
-            rect.setAttribute('x', (x[point] + x[point - 1]) / 2);
-        }
-        rect.setAttribute('y', 0);
-        rect.setAttribute('fill', 'white');
-        rect.setAttribute('opacity', '0');
-        if(point == SVG.raw_points.length - 1) {
-            rect.setAttribute('width', (x[point] - x[point - 1])/2 + SVG.marginLeft);
-        }
-        else if(point == 0) {
-            rect.setAttribute('width', (x[1] - x[0])/2 + SVG.marginLeft);
-        }
-        else {
-            rect.setAttribute('width', (x[point + 1] - x[point - 1])/2);
-        }
-        rect.setAttribute('height', '100%');
-        SVG.g.appendChild(rect);
-
-        rect.addEventListener('mouseover', function() {
-            SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '6');
-            if(SVG.labels[parseInt(this.getAttribute('id').replace('over_', ''))] !== '') {
-                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', 'block');
+            rect.setAttribute('y', 0);
+            rect.setAttribute('fill', 'white');
+            rect.setAttribute('opacity', '0');
+            if(point == SVG.raw_points[graph].data.length - 1) {
+                rect.setAttribute('width', (x[point] - x[point - 1])/2 + SVG.marginLeft);
             }
-        })
-        rect.addEventListener('mouseout', function() {
-            SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '4');
-            if(SVG.labels[parseInt(this.getAttribute('id').replace('over_', ''))] !== '') {
-                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', 'none');
+            else if(point == 0) {
+                rect.setAttribute('width', (x[1] - x[0])/2 + SVG.marginLeft);
             }
-        })
+            else {
+                rect.setAttribute('width', (x[point + 1] - x[point - 1])/2);
+            }
+            rect.setAttribute('height', '100%');
+            SVG.g.appendChild(rect);
+
+            rect.addEventListener('mouseover', function() {
+                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '6');
+                if(SVG.labels[graph][parseInt(this.getAttribute('id').replace('over_', ''))] !== '') {
+                    SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', 'block');
+                }
+            })
+            rect.addEventListener('mouseout', function() {
+                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '4');
+                if(SVG.labels[graph][parseInt(this.getAttribute('id').replace('over_', ''))] !== '') {
+                    SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', 'none');
+                }
+            })
+        }
     }
 }
 
