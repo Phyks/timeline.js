@@ -21,8 +21,7 @@ SVG.labels = [];
  * height / width = size of the svg
  * grid = small / big / both
  */
-SVG.init = function (id, height, width, grid, x_axis, rounded)
-{
+SVG.init = function (id, height, width, grid, x_axis, rounded) {
     if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
         alert("Your browser does not support embedded SVG.");
     }
@@ -124,6 +123,54 @@ SVG.init = function (id, height, width, grid, x_axis, rounded)
 
     SVG.rounded = rounded;
     SVG.x_axis = x_axis;
+
+    SVG.parent_holder.addEventListener('mousemove', function(e) {
+        var evt = e || window.event;
+        var rect = false;
+
+        // Reinitialize all states
+        var rects = SVG.holder.querySelectorAll('.over');
+        for(rect = 0; rect < rects.length; rect ++) {
+            SVG.holder.getElementById(rects[rect].getAttribute('id').replace('over', 'point')).setAttribute('r', '4');
+            if(SVG.labels[graph][parseInt(rects[rect].getAttribute('id').replace('over_', ''))] !== '') {
+                SVG.holder.getElementById(rects[rect].getAttribute('id').replace('over', 'label')).setAttribute('display', 'none');
+            }
+        }
+
+        SVG.overEffect(evt.clientX, evt.clientY);
+    });
+}
+
+SVG.hasClass = function (element, cls) {
+    return (' ' + element.getAttribute('class') + ' ').indexOf(' ' + cls + ' ') > -1;
+}
+
+SVG.overEffect = function(x, y) {
+    if(!document.elementFromPoint(x, y)) {
+        return;
+    }
+
+    // Recursive function to pass event to all superposed rects
+    var rect = document.elementFromPoint(x, y);
+    
+    if(!SVG.hasClass(rect, 'over')) {
+        return;
+    }
+
+    // Handle the event on current rect
+    SVG.holder.getElementById(rect.getAttribute('id').replace('over', 'point')).setAttribute('r', '6');
+    if(SVG.labels[graph][parseInt(rect.getAttribute('id').replace('over_', ''))] !== '') {
+        SVG.holder.getElementById(rect.getAttribute('id').replace('over', 'label')).setAttribute('display', 'block');
+    }
+
+    // Hide it
+    rect.setAttribute('display', 'none');
+
+    // Recursive call
+    SVG.overEffect(x, y);
+
+    // Display again the rect element
+    rect.setAttribute('display', 'block');
 }
 
 SVG.newCoordinates = function(value, min, max, minValue, maxValue) {
@@ -444,29 +491,16 @@ SVG.draw = function() {
             rect.setAttribute('fill', 'white');
             rect.setAttribute('opacity', '0');
             if(point == SVG.raw_points[graph].data.length - 1) {
-                rect.setAttribute('width', (x[point] - x[point - 1])/2 + SVG.marginLeft);
+                rect.setAttribute('width', SVG.parent_holder.offsetWidth - (x[point] + x[point - 1])/2);
             }
             else if(point == 0) {
-                rect.setAttribute('width', (x[1] - x[0])/2 + SVG.marginLeft);
+                rect.setAttribute('width', (x[1] + x[0])/2 + SVG.marginLeft);
             }
             else {
                 rect.setAttribute('width', (x[point + 1] - x[point - 1])/2);
             }
             rect.setAttribute('height', '100%');
             SVG.g.appendChild(rect);
-
-            rect.addEventListener('mouseover', function() {
-                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '6');
-                if(SVG.labels[graph][parseInt(this.getAttribute('id').replace('over_', ''))] !== '') {
-                    SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', 'block');
-                }
-            })
-            rect.addEventListener('mouseout', function() {
-                SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).setAttribute('r', '4');
-                if(SVG.labels[graph][parseInt(this.getAttribute('id').replace('over_', ''))] !== '') {
-                    SVG.holder.getElementById(this.getAttribute('id').replace('over', 'label')).setAttribute('display', 'none');
-                }
-            })
         }
     }
 }
