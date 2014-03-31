@@ -1,3 +1,18 @@
+/* Timeline.js
+ * Author : Phyks (http://phyks.me)
+ * http://phyks.github.io/timeline.js
+
+ * --------------------------------------------------------------------------------
+ * "THE NO-ALCOHOL BEER-WARE LICENSE" (Revision 42):
+ * Phyks (webmaster@phyks.me) wrote this file. As long as you retain this notice you
+ * can do whatever you want with this stuff (and you can also do whatever you want
+ * with this stuff without retaining it, but that's not cool...). If we meet some
+ * day, and you think this stuff is worth it, you can buy me a <del>beer</del> soda
+ * in return.
+ * Phyks
+ * ---------------------------------------------------------------------------------
+ */
+
 var SVG = {};
 SVG.ns = "http://www.w3.org/2000/svg";
 SVG.xlinkns = "http://www.w3.org/1999/xlink";
@@ -15,21 +30,26 @@ SVG.g = false;
 SVG.axis = false;
 SVG.raw_points = [];
 SVG.labels = [];
+SVG.x_callback = false;
 
 /* Initialization :
+ * arg is an object with :
  * id = id of the parent block
  * height / width = size of the svg
  * grid = small / big / both
+ * x_axis = true / false to show or hide x axis
+ * rounded = true / false to use splines to smoothen the graph
+ * x_callback = function(arg) { } or false is called to display the legend on the x axis
  */
-SVG.init = function (id, height, width, grid, x_axis, rounded) {
+SVG.init = function (arg) {
     if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
         alert("Your browser does not support embedded SVG.");
     }
-    SVG.parent_holder = document.getElementById(id);
+    SVG.parent_holder = document.getElementById(arg.id);
 
     var svg = document.createElementNS(SVG.ns, 'svg:svg');
-    svg.setAttribute('width', width);
-    svg.setAttribute('height', height);
+    svg.setAttribute('width', arg.width);
+    svg.setAttribute('height', arg.height);
     svg.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xlink', SVG.xlinkns);
     SVG.parent_holder.appendChild(svg);
 
@@ -38,7 +58,7 @@ SVG.init = function (id, height, width, grid, x_axis, rounded) {
     var defs = document.createElementNS(SVG.ns, 'defs');
     SVG.holder.appendChild(defs);
 
-    if(grid === 'small' || grid === 'both') {
+    if(arg.grid === 'small' || arg.grid === 'both') {
         var small_grid_pattern = document.createElementNS(SVG.ns, 'pattern');
         small_grid_pattern.setAttribute('id', 'smallGrid');
         small_grid_pattern.setAttribute('width', 8);
@@ -54,14 +74,14 @@ SVG.init = function (id, height, width, grid, x_axis, rounded) {
 
         defs.appendChild(small_grid_pattern);
     }
-    if(grid === 'big' || grid === 'both') {
+    if(arg.grid === 'big' || arg.grid === 'both') {
         var grid_pattern = document.createElementNS(SVG.ns, 'pattern');
         grid_pattern.setAttribute('id', 'grid');
         grid_pattern.setAttribute('width', 80);
         grid_pattern.setAttribute('height', 80);
         grid_pattern.setAttribute('patternUnits', 'userSpaceOnUse');
 
-        if(grid === 'both') {
+        if(arg.grid === 'both') {
             var grid_rect = document.createElementNS(SVG.ns, 'rect');
             grid_rect.setAttribute('width', 80);
             grid_rect.setAttribute('height', 80);
@@ -78,7 +98,7 @@ SVG.init = function (id, height, width, grid, x_axis, rounded) {
 
         defs.appendChild(grid_pattern);
     }
-    SVG.grid = grid;
+    SVG.grid = arg.grid;
 
 
     var marker = document.createElementNS(SVG.ns, 'marker');
@@ -98,7 +118,7 @@ SVG.init = function (id, height, width, grid, x_axis, rounded) {
     SVG.g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
     SVG.holder.appendChild(SVG.g);
 
-    if(x_axis === true) {
+    if(arg.x_axis === true) {
         SVG.axis = document.createElementNS(SVG.ns, 'line');
         SVG.axis.setAttribute('x1', SVG.marginLeft);
         SVG.axis.setAttribute('x2', SVG.parent_holder.offsetWidth - 13 - SVG.marginRight);
@@ -121,8 +141,10 @@ SVG.init = function (id, height, width, grid, x_axis, rounded) {
         SVG.g.appendChild(grid);
     }
 
-    SVG.rounded = rounded;
-    SVG.x_axis = x_axis;
+    SVG.rounded = arg.rounded;
+    SVG.x_axis = arg.x_axis;
+
+    SVG.x_callback = arg.x_callback;
 
     SVG.parent_holder.addEventListener('mousemove', function(e) {
         var evt = e || window.event;
@@ -388,7 +410,7 @@ SVG.draw = function() {
         element.setAttribute('fill', SVG.raw_points[graph].color);
         element.setAttribute('opacity', '0.25');
         element.setAttribute('stroke', 'none');
-        element.setAttribute('d', 'M '+SVG.marginLeft+' '+2*SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+2*SVG.marginBottom+' Z');
+        element.setAttribute('d', 'M '+x[0]+' '+2*SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+2*SVG.marginBottom+' Z');
         SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
 
         element = document.createElementNS(SVG.ns, 'path');
@@ -409,7 +431,7 @@ SVG.draw = function() {
             element.setAttribute('fill', '#333');
             element.setAttribute('stroke', SVG.raw_points[graph].color);
             element.setAttribute('stroke-width', 2);
-            SVG.g.appendChild(element);
+            SVG.g.insertBefore(element, SVG.g.querySelectorAll('.label')[0]);
 
             if(SVG.labels[graph][point] !== '') {
                 var g = document.createElementNS(SVG.ns, 'g');
@@ -501,19 +523,38 @@ SVG.draw = function() {
             }
             rect.setAttribute('height', '100%');
             SVG.g.appendChild(rect);
+
+            if(SVG.x_callback !== false) {
+                element = document.createElementNS(SVG.ns, 'text');
+                element.setAttribute('class', 'legend_x');
+                element.setAttribute('fill', 'gray');
+                element.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
+                element.appendChild(document.createTextNode(SVG.x_callback(x[point])));
+                SVG.g.appendChild(element);
+                element.setAttribute('x', x[point] - element.getBoundingClientRect().width / 2 + 2.5);
+                element.setAttribute('y', SVG.parent_holder.offsetHeight - SVG.marginBottom - SVG.newCoordinates(0, scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
+
+                element = document.createElementNS(SVG.ns, 'line');
+                element.setAttribute('class', 'legend_x');
+                element.setAttribute('stroke', 'gray');
+                element.setAttribute('stroke-width', 2);
+                element.setAttribute('x1', x[point]);
+                element.setAttribute('x2', x[point]);
+                element.setAttribute('y1', SVG.newCoordinates(0, scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop) - 5);
+                element.setAttribute('y2', SVG.newCoordinates(0, scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop) + 5);
+                SVG.g.appendChild(element);
+            }
         }
     }
 }
 
-var old = window.onresize || function() {};
 window.onresize = function() {
-    old();
     if(SVG.g !== false) {
         SVG.g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
         if(SVG.x_axis === true) {
             SVG.axis.setAttribute('x2', SVG.parent_holder.offsetWidth - 13 - SVG.marginRight);
         }
-        [].forEach.call(SVG.holder.querySelectorAll('.label, .over, .point, .line, .graph'), function(el) {
+        [].forEach.call(SVG.holder.querySelectorAll('.label, .over, .point, .line, .graph, .legend_x'), function(el) {
             el.parentNode.removeChild(el);
         });
         SVG.draw();
