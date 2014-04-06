@@ -118,7 +118,7 @@ SVG.addPoints = function (graph, data) {
 // Compute new coordinates, knowing the min and max value to fit the graph in the container
 SVG.newCoordinate = function(value, min, max, minValue, maxValue) {
     var a = (maxValue - minValue) / (max - min);
-    return a * value - a * min + minValue;
+    return a *(value - min) + minValue;
 };
 
 // Compute new X and Y values
@@ -127,7 +127,7 @@ SVG.getNewXY = function (minX, maxX, minY, maxY) {
     return function (x, y) {
         return { 
             'x': SVG.newCoordinate(x, minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight),
-            'y': SVG.newCoordinate(y, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetWidth - SVG.marginTop)
+            'y': SVG.newCoordinate(y, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop)
         };
     };
 };
