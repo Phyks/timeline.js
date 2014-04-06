@@ -30,7 +30,163 @@ SVG.g = false;
 SVG.axis = false;
 SVG.raw_points = [];
 SVG.labels = [];
+SVG.click = [];
 SVG.x_callback = false;
+
+
+// Create an element "element" with the attributes "attrs"
+SVG.createElement = function (element, attrs) {
+    var el = document.createElementNS(SVG.ns, element);
+    for(attr in attrs) {
+        el.setAttribute(attr, attrs[attr]);
+    }
+
+    return el;
+};
+
+// Check wether the element "element" has class "class"
+SVG.hasClass = function (element, cls) {
+    return (' ' + element.getAttribute('class') + ' ').indexOf(' ' + cls + ' ') > -1;
+};
+
+// Add a new graph to the SVG
+SVG.addGraph = function (graph, color) {
+    SVG.raw_points[graph] = {};
+    SVG.raw_points[graph].color = color;
+    SVG.raw_points[graph].data = new Array();
+
+    SVG.labels[graph] = new Array();
+    SVG.click[graph] = new Array();
+};
+
+// Test wether a graph of name "graph" already exists
+SVG.hasGraph = function (graph) {
+    if(SVG.raw_points[graph] === undefined) {
+        return false;
+    }
+    else {
+        return true;
+    }
+};
+
+// Clear the specified graph data, or completely clear all the graph data
+SVG.clearGraphData = function (graph) {
+    if(typeof(graph) === 'undefined') {
+        SVG.raw_points = [];
+        SVG.labels = [];
+        SVG.click = [];
+    }
+    else {
+        SVG.raw_points[graph].data = new Array();
+        SVG.labels[graph] = new Array();
+        SVG.click[graph] = new Array();
+    }
+};
+
+// Add points to the specified graph
+// TODO : Sort with existing also
+SVG.addPoints = function (graph, data) {
+    data.sort(function (a, b) {
+        if(a.x < b.x) {
+            return -1;
+        }
+        else if(a.x == b.x) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    });
+
+    for(var point = 0; point < data.length; point++) {
+        SVG.raw_points[graph].data.push([data[point].x, data[point].y]);
+        if(data[point].label !== undefined) {
+            SVG.labels[graph].push(data[point].label);
+        }
+        else {
+            SVG.labels[graph].push('');
+        }
+        if(data[point].click !== undefined) {
+            SVG.click[graph].push(data[point].click);
+        }
+        else {
+            SVG.click[graph].push(false);
+        }
+    }
+};
+
+// Compute new coordinates, knowing the min and max value to fit the graph in the container
+SVG.newCoordinate = function(value, min, max, minValue, maxValue) {
+    var a = (maxValue - minValue) / (max - min);
+    return a * value - a * min + minValue;
+};
+
+// Compute new X and Y values
+// TODO : Partial application ?
+SVG.getNewXY = function (minX, maxX, minY, maxY) {
+    return function (x, y) {
+        return { 
+            'x': SVG.newCoordinate(x, minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight),
+            'y': SVG.newCoordinate(y, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetWidth - SVG.marginTop)
+        };
+    };
+};
+
+// Get the necessary control points to smoothen the graph, is rounded is true
+SVG.getControlPoints = function (data) {
+    // From http://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
+    var p1 = new Array();
+	var p2 = new Array();
+	var n = data.length - 1;
+	
+	/*rhs vector*/
+	var a = new Array();
+	var b = new Array();
+	var c = new Array();
+	var r = new Array();
+	
+	/*left most segment*/
+	a[0] = 0;
+	b[0] = 2;
+	c[0] = 1;
+	r[0] = data[0] + 2*data[1];
+	
+	/*internal segments*/
+	for (var i = 1; i < n - 1; i++) {
+        a[i] = 1;
+        b[i] = 4;
+        c[i] = 1;
+        r[i] = 4 * data[i] + 2 * data[i+1];
+	}
+			
+	/*right segment*/
+	a[n-1] = 2;
+	b[n-1] = 7;
+	c[n-1] = 0;
+	r[n-1] = 8*data[n-1] + data[n];
+	
+	/*solves Ax=b with the Thomas algorithm (from Wikipedia)*/
+    var m;
+	for (var i = 1; i < n; i++) {
+		m = a[i]/b[i-1];
+		b[i] = b[i] - m * c[i - 1];
+		r[i] = r[i] - m*r[i-1];
+	}
+ 
+	p1[n-1] = r[n-1]/b[n-1];
+	for (var i = n - 2; i >= 0; --i) {
+		p1[i] = (r[i] - c[i] * p1[i+1]) / b[i];
+    }
+		
+	/*we have p1, now compute p2*/
+	for (var i=0;i<n-1;i++) {
+		p2[i] = 2*data[i+1] - p1[i+1];
+    }
+	
+	p2[n-1] = 0.5*(data[n] + p1[n-1]);
+	
+	return {p1:p1, p2:p2};
+};
 
 /* Initialization :
  * arg is an object with :
@@ -39,61 +195,40 @@ SVG.x_callback = false;
  * grid = small / big / both
  * x_axis = true / false to show or hide x axis
  * rounded = true / false to use splines to smoothen the graph
- * x_callback = function(arg) { } or false is called to display the legend on the x axis
+ * x_callback = function(args) { } or false is called to display the legend on the x axis
  */
 SVG.init = function (arg) {
     if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
-        alert("Your browser does not support embedded SVG.");
+        alert("ERROR : Your browser does not support embedded SVG.");
     }
     SVG.parent_holder = document.getElementById(arg.id);
 
-    var svg = document.createElementNS(SVG.ns, 'svg:svg');
-    svg.setAttribute('width', arg.width);
-    svg.setAttribute('height', arg.height);
+    var svg = SVG.createElement('svg:svg', { 'width': arg.width, 'height': arg.height });
     svg.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xlink', SVG.xlinkns);
     SVG.parent_holder.appendChild(svg);
 
     SVG.holder = SVG.parent_holder.querySelector('svg');
 
-    var defs = document.createElementNS(SVG.ns, 'defs');
+    defs = SVG.createElement('defs', {});
     SVG.holder.appendChild(defs);
 
     if(arg.grid === 'small' || arg.grid === 'both') {
-        var small_grid_pattern = document.createElementNS(SVG.ns, 'pattern');
-        small_grid_pattern.setAttribute('id', 'smallGrid');
-        small_grid_pattern.setAttribute('width', 8);
-        small_grid_pattern.setAttribute('height', 8);
-        small_grid_pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+        var small_grid_pattern = SVG.createElement('pattern', { 'id': 'smallGrid', 'width': 8, 'height': 8, 'patternUnits': 'userSpaceOnUse' });
 
-        var small_grid_path = document.createElementNS(SVG.ns, 'path');
-        small_grid_path.setAttribute('d', 'M 8 0 L 0 0 0 8');
-        small_grid_path.setAttribute('fill', 'none');
-        small_grid_path.setAttribute('stroke', 'gray');
-        small_grid_path.setAttribute('stroke-width', '0.5');
+        var small_grid_path = SVG.createElement('path', { 'd': 'M 8 0 L 0 0 0 8', 'fill': 'none', 'stroke': 'gray', 'stroke-width': '0.5' });
         small_grid_pattern.appendChild(small_grid_path);
 
         defs.appendChild(small_grid_pattern);
     }
     if(arg.grid === 'big' || arg.grid === 'both') {
-        var grid_pattern = document.createElementNS(SVG.ns, 'pattern');
-        grid_pattern.setAttribute('id', 'grid');
-        grid_pattern.setAttribute('width', 80);
-        grid_pattern.setAttribute('height', 80);
-        grid_pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+        var grid_pattern = SVG.createElement('pattern', { 'id': 'grid', 'width': 80, 'height': 80, 'patternUnits': 'userSpaceOnUse' });
 
         if(arg.grid === 'both') {
-            var grid_rect = document.createElementNS(SVG.ns, 'rect');
-            grid_rect.setAttribute('width', 80);
-            grid_rect.setAttribute('height', 80);
-            grid_rect.setAttribute('fill', 'url(#smallGrid)');
+            var grid_rect = SVG.createElement('rect', {'width': 80, 'height': 80, 'fill': 'url(#smallGrid)' });
             grid_pattern.appendChild(grid_rect);
         }
 
-        var grid_path = document.createElementNS(SVG.ns, 'path');
-        grid_path.setAttribute('d', 'M 80 0 L 0 0 0 80');
-        grid_path.setAttribute('fill', 'none');
-        grid_path.setAttribute('stroke', 'gray');
-        grid_path.setAttribute('stroke-width', '1');
+        var grid_path = SVG.createElement('path', {'d': 'M 80 0 L 0 0 0 80', 'fill': 'none', 'stroke': 'gray', 'stroke-width': '1'});
         grid_pattern.appendChild(grid_path);
 
         defs.appendChild(grid_pattern);
@@ -101,37 +236,21 @@ SVG.init = function (arg) {
     SVG.grid = arg.grid;
 
 
-    var marker = document.createElementNS(SVG.ns, 'marker');
-    marker.setAttribute('id', 'markerArrow');
-    marker.setAttribute('markerWidth', 13);
-    marker.setAttribute('markerHeight', 13);
-    marker.setAttribute('refX', 2);
-    marker.setAttribute('refY', 6);
-    marker.setAttribute('orient', 'auto');
-    var marker_path = document.createElementNS(SVG.ns, 'path');
-    marker_path.setAttribute('d', 'M2,2 L2,11 L10,6 L2,2');
-    marker_path.setAttribute('fill', 'gray');
+    var marker = SVG.createElement('marker', {'id': 'markerArrow', 'markerWidth': 13, 'markerHeight': 13, 'refX': 2, 'refY': 6, 'orient': 'auto' });
+    var marker_path = SVG.createElement('path', {'d': 'M2,2 L2,11 L10,6 L2,2', 'fill': 'gray' });
     marker.appendChild(marker_path);
     defs.appendChild(marker);
 
-    SVG.g = document.createElementNS(SVG.ns, 'g');
-    SVG.g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
+    SVG.g = SVG.createElement('g', {'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
     SVG.holder.appendChild(SVG.g);
 
     if(arg.x_axis === true) {
-        SVG.axis = document.createElementNS(SVG.ns, 'line');
-        SVG.axis.setAttribute('x1', SVG.marginLeft);
-        SVG.axis.setAttribute('x2', SVG.parent_holder.offsetWidth - 13 - SVG.marginRight);
-        SVG.axis.setAttribute('stroke', 'gray');
-        SVG.axis.setAttribute('stroke-width', 3);
-        SVG.axis.setAttribute('marker-end', 'url("#markerArrow")');
+        SVG.axis = SVG.createElement('line', {'x1': SVG.marginLeft, 'y1': SVG.parent_holder.offsetHeight / 2 + 1.5, 'x2': SVG.parent_holder.offsetWidth - 13 - SVG.marginRight, 'y2': SVG.parent_holder.offsetHeight / 2 + 1.5, 'stroke': 'gray', 'stroke-width': 3, 'marker-end': 'url("#markerArrow")'});
         SVG.g.appendChild(SVG.axis);
     }
 
     if(SVG.grid !== "none") {
-        var grid = document.createElementNS(SVG.ns, 'rect');
-        grid.setAttribute('width', "100%");
-        grid.setAttribute('height', "100%");
+        var grid = SVG.createElement('rect', {'width': '100%', 'height': '100%'});
         if(SVG.grid === 'big' || SVG.grid === 'both') {
             grid.setAttribute('fill', 'url(#grid)');
         }
@@ -147,6 +266,7 @@ SVG.init = function (arg) {
     SVG.x_callback = arg.x_callback;
 
     SVG.parent_holder.addEventListener('mousemove', function(e) {
+        // TODO
         var evt = e || window.event;
         var rect = false;
 
@@ -161,12 +281,10 @@ SVG.init = function (arg) {
 
         SVG.overEffect(evt.clientX, evt.clientY);
     });
-}
+};
 
-SVG.hasClass = function (element, cls) {
-    return (' ' + element.getAttribute('class') + ' ').indexOf(' ' + cls + ' ') > -1;
-}
-
+// Handle the over effect 
+// TODO : Better solution ?
 SVG.overEffect = function(x, y) {
     if(!document.elementFromPoint(x, y)) {
         return;
@@ -193,23 +311,25 @@ SVG.overEffect = function(x, y) {
 
     // Display again the rect element
     rect.setAttribute('display', 'block');
-}
+};
 
-SVG.newCoordinates = function(value, min, max, minValue, maxValue) {
-    var a = (maxValue - minValue) / (max - min);
-    return a * value - a * min + minValue;
-}
-
+// Get the scale so that graph fits with window
+// TODO : refactor
 SVG.scale = function(data) {
+    var empty = true;
+    for(graph in data) {
+        empty = false;
+        break;
+    }
+    if(empty) {
+        return false;
+    }
+
     var minX = new Array(), minY = new Array();
     var maxX = new Array(), maxY = new Array();
-    var x = 0, y = 0;
     var circle = false, last_point = false, line = false;
 
-    var tmp_minX = false;
-    var tmp_minY = 0;
-    var tmp_maxX = false;
-    var tmp_maxY = false;
+    var tmp_minX, tmp_minY, tmp_maxX, tmp_maxY
 
     for(graph in data) {
         tmp_minX = false;
@@ -217,7 +337,7 @@ SVG.scale = function(data) {
         tmp_maxX = false;
         tmp_maxY = false;
 
-        for(point = 0; point < data[graph].data.length; point++) {
+        for(var point = 0; point < data[graph].data.length; point++) {
             x = data[graph].data[point][0];
             y = data[graph].data[point][1];
 
@@ -245,244 +365,110 @@ SVG.scale = function(data) {
     maxX = Math.max.apply(null, maxX);
     maxY = Math.max.apply(null, maxY);
 
-    x = SVG.newCoordinates(minX+Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight) - SVG.newCoordinates(minX, minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight);
-    y = SVG.newCoordinates(minY+Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop) - SVG.newCoordinates(minY, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop);
+    var scale = SVG.getNewXY(minX, maxX, minY, maxY);
+    var coordinates = scale(Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))));
     if(SVG.grid === 'big' || SVG.grid === 'both') {
-        SVG.holder.getElementById('grid').setAttribute('width', x);
-        SVG.holder.getElementById('grid').setAttribute('height', y);
-        SVG.holder.getElementById('grid').setAttribute('y', SVG.newCoordinates(Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
-        SVG.holder.getElementById('grid').setAttribute('x', SVG.newCoordinates(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
-        SVG.holder.getElementById('grid').querySelector('path').setAttribute('d', 'M '+x+' 0 L 0 0 0 '+y);
+        SVG.holder.getElementById('grid').setAttribute('width', coordinates.x);
+        SVG.holder.getElementById('grid').setAttribute('height', coordinates.y);
+        var big_coords = scale(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))))
+        SVG.holder.getElementById('grid').setAttribute('y', big_coords.y);
+        SVG.holder.getElementById('grid').setAttribute('x', big_coords.x);
+        SVG.holder.getElementById('grid').querySelector('path').setAttribute('d', 'M '+coordinates.x+' 0 L 0 0 0 '+coordinates.y);
 
         if(SVG.grid === 'both') {
-            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('width', x);
-            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('height', y);
+            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('width', coordinates.x);
+            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('height', coordinates.y);
         }
     }
     if(SVG.grid === 'small' || SVG.grid === 'both') {
-        x = x / 10;
-        y = y / 10;
-        SVG.holder.getElementById('smallGrid').setAttribute('width', x);
-        SVG.holder.getElementById('smallGrid').setAttribute('height', y);
+        coordinates.x = coordinates.x / 10;
+        coordinates.y = coordinates.y / 10;
+        SVG.holder.getElementById('smallGrid').setAttribute('width', coordinates.x);
+        SVG.holder.getElementById('smallGrid').setAttribute('height', coordinates.y);
         if(SVG.grid === 'small') {
-            SVG.holder.getElementById('smallGrid').setAttribute('y', SVG.newCoordinates(Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))), minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
-        SVG.holder.getElementById('smallGrid').setAttribute('x', SVG.newCoordinates(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), minX, maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
+            var small_coords = scale(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))));
+            SVG.holder.getElementById('smallGrid').setAttribute('y', small_coords.y);
+            SVG.holder.getElementById('smallGrid').setAttribute('x', small_coords.x);
         }
-        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+x+' 0 L 0 0 0 '+y);
+        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+coordinates.x+' 0 L 0 0 0 '+coordinates.y);
     }
 
     /* Draw axis */
     if(SVG.x_axis === true) {
-        y = SVG.newCoordinates(0, minY, maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop);
+        y = scale(0, 0).y;
         SVG.axis.setAttribute('y1', y);
         SVG.axis.setAttribute('y2', y);
     }
 
-    var returned = new Array();
-    returned['minX'] = minX;
-    returned['minY'] = minY;
-    returned['maxX'] = maxX;
-    returned['maxY'] = maxY;
-    return returned;
-}
-
-SVG.addGraph = function (graph, color) {
-    SVG.raw_points[graph] = {};
-    SVG.raw_points[graph].color = color;
-    SVG.raw_points[graph].data = new Array();
-
-    SVG.labels[graph] = new Array();
+    return scale;
 };
 
-SVG.hasGraph = function (graph) {
-    if(SVG.raw_points[graph] === undefined) {
-        return false;
-    }
-    else {
-        return true;
-    }
-};
-
-SVG.addPoints = function (graph, data) {
-    data.sort(function (a, b) {
-        if(a.x < b.x) {
-            return -1;
-        }
-        else if(a.x == b.x) {
-            return 0;
-        }
-        else {
-            return 1;
-        }
-    });
-
-    for(point = 0; point < data.length; point++) {
-        SVG.raw_points[graph].data.push([data[point].x, data[point].y]);
-        if(data[point].label !== undefined) {
-            SVG.labels[graph].push(data[point].label);
-        }
-        else {
-            SVG.labels[graph].push('');
-        }
-    }
-};
-
-SVG.clearGraph = function (graph) {
-    if(typeof(graph) === 'undefined') {
-        SVG.raw_points = [];
-        SVG.labels = [];
-    }
-    else {
-        SVG.raw_points[graph].data = new Array();
-        SVG.labels[graph] = new Array();
-    }
-};
-
-SVG.getControlPoints = function (data) {
-    // http://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
-    p1 = new Array();
-	p2 = new Array();
-	n = data.length - 1;
-	
-	/*rhs vector*/
-	a = new Array();
-	b = new Array();
-	c = new Array();
-	r = new Array();
-	
-	/*left most segment*/
-	a[0] = 0;
-	b[0] = 2;
-	c[0] = 1;
-	r[0] = data[0] + 2*data[1];
-	
-	/*internal segments*/
-	for (i = 1; i < n - 1; i++) {
-		a[i] = 1;
-		b[i] = 4;
-		c[i] = 1;
-		r[i] = 4 * data[i] + 2 * data[i+1];
-	}
-			
-	/*right segment*/
-	a[n-1] = 2;
-	b[n-1] = 7;
-	c[n-1] = 0;
-	r[n-1] = 8*data[n-1] + data[n];
-	
-	/*solves Ax=b with the Thomas algorithm (from Wikipedia)*/
-	for (i = 1; i < n; i++) {
-		m = a[i]/b[i-1];
-		b[i] = b[i] - m * c[i - 1];
-		r[i] = r[i] - m*r[i-1];
-	}
- 
-	p1[n-1] = r[n-1]/b[n-1];
-	for (i = n - 2; i >= 0; --i) {
-		p1[i] = (r[i] - c[i] * p1[i+1]) / b[i];
-    }
-		
-	/*we have p1, now compute p2*/
-	for (i=0;i<n-1;i++) {
-		p2[i] = 2*data[i+1] - p1[i+1];
-    }
-	
-	p2[n-1] = 0.5*(data[n] + p1[n-1]);
-	
-	return {p1:p1, p2:p2};
-}
-
+// Draw graphs
+// TODO : Finish refactor
 SVG.draw = function() {
     var scale = SVG.scale(SVG.raw_points);
-    var x = new Array();
-    var y = new Array();
-    var element = false;
-    var rect = false;
-    var point = false;
-    var px = false;
-    var py = false;
-    var path = '';
+    var x, y, path;
+    var px, py;
+    var element;
 
-    for(graph in SVG.raw_points) {
+    for(var graph in SVG.raw_points) {
         x = new Array();
         y = new Array();
         path = '';
+
         /* Draw points */
-        for(point = 0; point < SVG.raw_points[graph].data.length; point++) {
-            x.push(SVG.newCoordinates(SVG.raw_points[graph].data[point][0], scale.minX, scale.maxX, SVG.marginLeft, SVG.parent_holder.offsetWidth - SVG.marginRight));
-            y.push(SVG.newCoordinates(SVG.raw_points[graph].data[point][1], scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
+        for(var point = 0; point < SVG.raw_points[graph].data.length; point++) {
+            var tmp = scale(SVG.raw_points[graph].data[point][0], SVG.raw_points[graph].data[point][1]);
+            x.push(tmp.x);
+            y.push(tmp.y);
         }
 
         if(SVG.rounded === true) {
             px = SVG.getControlPoints(x);
             py = SVG.getControlPoints(y);
-            for(point = 0; point < SVG.raw_points[graph].data.length - 1; point++) {
+            for(var point = 0; point < SVG.raw_points[graph].data.length - 1; point++) {
                 path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+x[point+1]+' '+y[point+1]+' ';
             }
         }
         else {
-            for(point = 1; point < SVG.raw_points[graph].data.length; point++) {
+            for(var point = 1; point < SVG.raw_points[graph].data.length; point++) {
                 path += 'L '+x[point]+' '+y[point]+' ';
             }
         }
-        element = document.createElementNS(SVG.ns, 'path');
-        element.setAttribute('class', 'graph');
-        element.setAttribute('fill', SVG.raw_points[graph].color);
-        element.setAttribute('opacity', '0.25');
-        element.setAttribute('stroke', 'none');
-        element.setAttribute('d', 'M '+x[0]+' '+2*SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+2*SVG.marginBottom+' Z');
+        element = SVG.createElement('path', {'class': 'graph', 'fill': SVG.raw_points[graph].color, 'opacity': '0.25', 'stroke': 'none', 'd': 'M '+x[0]+' '+2*SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+2*SVG.marginBottom+' Z' });
         SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
 
-        element = document.createElementNS(SVG.ns, 'path');
-        element.setAttribute('class', 'line');
-        element.setAttribute('stroke', SVG.raw_points[graph].color);
-        element.setAttribute('stroke-width', 2);
-        element.setAttribute('fill', 'none');
-        element.setAttribute('d', 'M '+x[0]+' '+y[0]+' '+path);
+        element = SVG.createElement('path', {'class': 'line', 'stroke': SVG.raw_points[graph].color, 'stroke-width': 2, 'fill': 'none', 'd': 'M '+x[0]+' '+y[0]+' '+path});
         SVG.g.appendChild(element);
 
-        for(point = 0; point < SVG.raw_points[graph].data.length; point++) {
-            element = document.createElementNS(SVG.ns, 'circle');
-            element.setAttribute('class', 'point');
-            element.setAttribute('id', 'point_'+point+'_'+graph);
-            element.setAttribute('cx', x[point]);
-            element.setAttribute('cy', y[point]);
-            element.setAttribute('r', 4);
-            element.setAttribute('fill', '#333');
-            element.setAttribute('stroke', SVG.raw_points[graph].color);
-            element.setAttribute('stroke-width', 2);
+        for(var point = 0; point < SVG.raw_points[graph].data.length; point++) {
+            element = SVG.createElement('circle', {'class': 'point', 'id': 'point_'+point+'_'+graph, 'cx': x[point], 'cy': y[point], 'r': 4, 'fill': '#333', 'stroke': SVG.raw_points[graph].color, 'stroke-width': 2});
             SVG.g.insertBefore(element, SVG.g.querySelectorAll('.label')[0]);
 
+            if(SVG.click[graph][point] !== false) {
+                element.onclick = SVG.click[graph][point];
+            }
+
             if(SVG.labels[graph][point] !== '') {
-                var g = document.createElementNS(SVG.ns, 'g');
-                g.setAttribute('class', 'label');
-                g.setAttribute('id', 'label_'+point+'_'+graph);
-                g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
+                var g = SVG.createElement('g', { 'class': 'label', 'id': 'label_'+point+'_'+graph, 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
                 SVG.g.appendChild(g);
 
-                element = document.createElementNS(SVG.ns, 'text');
+                element = SVG.createElement('text', {});
                 var text = SVG.labels[graph][point].replace('</sup>', '<sup>').split('<sup>');
-                var i = 0;
-                var tmp = false;
-                for(i = 0; i < text.length; i++) {
+                for(var i = 0; i < text.length; i++) {
                     text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%y', SVG.raw_points[graph].data[point][1]).replace('%x', SVG.raw_points[graph].data[point][0]);
                     if(i % 2 == 0) {
                         element.appendChild(document.createTextNode(text[i]));
 
                     }
                     else {
-                        tmp = document.createElementNS(SVG.ns, 'tspan');
-                        tmp.setAttribute('dy', '-5');
+                        var tmp = SVG.createElement('tspan', {'dy': '-5'});
                         tmp.appendChild(document.createTextNode(text[i]));
                         element.appendChild(tmp);
                     }
                 }
 
-                var path = document.createElementNS(SVG.ns, 'path');
-                path.setAttribute('stroke', 'black');
-                path.setAttribute('stroke-width', 2);
-                path.setAttribute('fill', 'white');
-                path.setAttribute('opacity', 0.5);
+                path = SVG.createElement('path', {'stroke': 'black', 'stroke-width': 2, 'fill': 'white', 'opacity': 0.5});
 
                 // Append here to have them with the good z-index, update their attributes later
                 g.appendChild(path);
@@ -525,19 +511,15 @@ SVG.draw = function() {
             }
         }
 
-        for(point = 0; point < SVG.raw_points[graph].data.length; point++) {
-            rect = document.createElementNS(SVG.ns, 'rect');
-            rect.setAttribute('class', 'over');
-            rect.setAttribute('id', 'over_'+point+'_'+graph);
+        for(var point = 0; point < SVG.raw_points[graph].data.length; point++) {
+            var rect = SVG.createElement('rect', {'class': 'over', 'id': 'over_'+point+'_'+graph, 'y': 0, 'fill': 'white', 'opacity': 0, 'height': '100%'});
             if(point == 0) {
                 rect.setAttribute('x', 0);
             }
             else {
                 rect.setAttribute('x', (x[point] + x[point - 1]) / 2);
             }
-            rect.setAttribute('y', 0);
-            rect.setAttribute('fill', 'white');
-            rect.setAttribute('opacity', '0');
+
             if(point == SVG.raw_points[graph].data.length - 1) {
                 rect.setAttribute('width', SVG.parent_holder.offsetWidth - (x[point] + x[point - 1])/2);
             }
@@ -547,34 +529,39 @@ SVG.draw = function() {
             else {
                 rect.setAttribute('width', (x[point + 1] - x[point - 1])/2);
             }
-            rect.setAttribute('height', '100%');
             SVG.g.appendChild(rect);
 
+            rect.onclick = (function(x, y) {
+                return function(e) {
+                    var evt = e || window.event;
+
+                    var X = evt.clientX - x;
+                    var Y = this.getBoundingClientRect().bottom - evt.clientY - y;
+                    if(X <= 5 &&  X >= -5 && Y <= 5 && Y >= -5) {
+                        SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).onclick();
+                    }
+                }
+            })(x[point], y[point]);
+
             if(SVG.x_callback !== false) {
-                element = document.createElementNS(SVG.ns, 'text');
-                element.setAttribute('class', 'legend_x');
-                element.setAttribute('fill', 'gray');
-                element.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
+                element = SVG.createElement('text', {'class': 'legend_x', 'fill': 'gray', 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
                 element.appendChild(document.createTextNode(SVG.x_callback(x[point])));
                 SVG.g.appendChild(element);
                 element.setAttribute('x', x[point] - element.getBoundingClientRect().width / 2 + 2.5);
-                element.setAttribute('y', SVG.parent_holder.offsetHeight - SVG.marginBottom - SVG.newCoordinates(0, scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop));
+                var y_zero = scale(0, 0).y
+                element.setAttribute('y', SVG.parent_holder.offsetHeight - SVG.marginBottom - y_zero);
 
-                element = document.createElementNS(SVG.ns, 'line');
-                element.setAttribute('class', 'legend_x');
-                element.setAttribute('stroke', 'gray');
-                element.setAttribute('stroke-width', 2);
-                element.setAttribute('x1', x[point]);
-                element.setAttribute('x2', x[point]);
-                element.setAttribute('y1', SVG.newCoordinates(0, scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop) - 5);
-                element.setAttribute('y2', SVG.newCoordinates(0, scale.minY, scale.maxY, 2*SVG.marginBottom, SVG.parent_holder.offsetHeight - SVG.marginTop) + 5);
+                element = SVG.createElement('line', {'class': 'legend_x', 'stroke': 'gray', 'stroke-width': 2, 'x1': x[point], 'x2': x[point], 'y1': y_zero - 5, 'y2': y_zero + 5});
                 SVG.g.appendChild(element);
             }
         }
     }
-}
+};
 
+var old = window.onresize || function () {};
 window.onresize = function() {
+    old();
+    // Redraw the SVG to fit the new size
     if(SVG.g !== false) {
         SVG.g.setAttribute('transform', 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)');
         if(SVG.x_axis === true) {
@@ -585,4 +572,4 @@ window.onresize = function() {
         });
         SVG.draw();
     }
-}
+};
