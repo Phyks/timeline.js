@@ -28,37 +28,76 @@
         </ul>
       </header>
       <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <h1>
+<a name="timelinejs" class="anchor" href="#timelinejs"><span class="octicon octicon-link"></span></a>Timeline.js</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>Timeline.js is a lightweight JS library to plot graphs using SVG. As it uses SVG, you can add event listeners on the plotted graph very easily.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p>I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k thanks to obfuscation. Better results may be obtained with a little refactor, but that's enough for me.</p>
+
+<h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>(See examples for more info. For live examples, see <a href="http://phyks.github.io/timeline.js/">http://phyks.github.io/timeline.js/</a>)</p>
+
+<p>First, you must include the <code>timeline.js</code> or <code>timeline.min.js</code> script.</p>
+
+<p>Then, you need to init the SVG drawing, thanks to <code>SVG.init({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'rounded': false, 'x_callback': false});</code>. The arguments are all optional and are:</p>
+
+<ul>
+<li>
+<code>id</code> : the id of the parent element that will contain the SVG</li>
+<li>
+<code>width</code> / <code>height</code> : width and height of the created SVG</li>
+<li>
+<code>grid</code> : none / small / big / both to choose which type of grid you want</li>
+<li>
+<code>x_axis</code> : true / false to show / hide the x axis</li>
+<li>
+<code>rounded</code> : true / false to use splines to smoothen the graph or not</li>
+<li>
+<code>x_callback</code> : callback function to call to get texts for the x legend. Not yet implemented.</li>
+</ul><p>Then, you can add as many graphs as you want, thanks to <code>SVG.addGraph(NAME, COLOR);</code> where COLOR must be a valid CSS color.
+And you can add points thanks to <code>SVG.addPoints(GRAPH_NAME, POINTS);</code>. Points is an array of point objects, which are of the type <code>{'x': ABSCISSA, 'y': ORDINATE, 'label': LABEL}</code>. LABEL is the text to display in the infobox when the mouse is over the point. You can use '%x' and '%y' in labels and they will be automatically replaced by the coordinates. You can also use <code>&lt;sup&gt;</code> and <code>&lt;sub&gt;</code> HTML tags. You can add another (optional) element <code>click</code> which must be a ffunction to bind to onclick event on this point.</p>
+
+<p><em>Note</em> : You don't have to sort the points inside a same list of points in a SVG.addGraph call. They will be sorted for you. But, if you call SVG.addPoints multiple times, you must sort the points yourself between each call. The script won't do it for you and it will result in weird graphs if you don't do it.</p>
+
+<p>Finally, you can draw the SVG thanks to <code>SVG.draw();</code>.</p>
+
+<h2>
+<a name="other-functions" class="anchor" href="#other-functions"><span class="octicon octicon-link"></span></a>Other functions</h2>
+
+<ul>
+<li>
+<code>SVG.clearGraph(GRAPH);</code> to delete the data for the graph GRAPH, or for all graphs if GRAPH is not specified.</li>
+<li>
+<code>SVG.hasGraph(GRAPH);</code> to check if a graph with name GRAPH has already been defined or not.</li>
+</ul><h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<pre><code>* --------------------------------------------------------------------------------
+* "THE NO-ALCOHOL BEER-WARE LICENSE" (Revision 42):
+* Phyks (webmaster@phyks.me) wrote this file. As long as you retain this notice you
+* can do whatever you want with this stuff (and you can also do whatever you want
+* with this stuff without retaining it, but that's not cool...). If we meet some 
+* day, and you think this stuff is worth it, you can buy me a &lt;del&gt;beer&lt;/del&gt; soda 
+* in return.
+*                                                                       Phyks
+* ---------------------------------------------------------------------------------
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<h2>
+<a name="known-bugs--todo" class="anchor" href="#known-bugs--todo"><span class="octicon octicon-link"></span></a>Known bugs / TODO</h2>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<p>Feel free to contribute !</p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<ul>
+<li>Legend on X axis is not implemented</li>
+<li>Y axis is not implemented, but could be implemented easily</li>
+<li>Over effect is a bit overkill right now</li>
+<li>You must add your points sorted, as the script won't sort them for you and it may result in very weird graphs</li>
+<li>Onclick events not working when there are multiple graphs.</li>
+</ul><p>The last three points are easy to implement by refactoring the way the raw points are stored and using a single array for all the graphs.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/Phyks">Phyks</a></p>
