@@ -13,6 +13,10 @@
  * ---------------------------------------------------------------------------------
  */
 
+// TODO :
+// * X legend
+// * Y axis
+
 var SVG = {};
 SVG.ns = "http://www.w3.org/2000/svg";
 SVG.xlinkns = "http://www.w3.org/1999/xlink";
@@ -122,7 +126,6 @@ SVG.newCoordinate = function(value, min, max, minValue, maxValue) {
 };
 
 // Compute new X and Y values
-// TODO : Partial application ?
 SVG.getNewXY = function (minX, maxX, minY, maxY) {
     return function (x, y) {
         return { 
@@ -266,7 +269,7 @@ SVG.init = function (arg) {
     SVG.x_callback = arg.x_callback;
 
     SVG.parent_holder.addEventListener('mousemove', function(e) {
-        // TODO
+        // TODO : Better over effect ?
         var evt = e || window.event;
         var rect = false;
 
@@ -314,7 +317,6 @@ SVG.overEffect = function(x, y) {
 };
 
 // Get the scale so that graph fits with window
-// TODO : refactor
 SVG.scale = function(data) {
     var empty = true;
     for(graph in data) {
@@ -329,8 +331,9 @@ SVG.scale = function(data) {
     var maxX = new Array(), maxY = new Array();
     var circle = false, last_point = false, line = false;
 
-    var tmp_minX, tmp_minY, tmp_maxX, tmp_maxY
+    var tmp_minX, tmp_minY, tmp_maxX, tmp_maxY;
 
+    // Look for max and min values for both axis
     for(graph in data) {
         tmp_minX = false;
         tmp_minY = 0;
@@ -365,32 +368,37 @@ SVG.scale = function(data) {
     maxX = Math.max.apply(null, maxX);
     maxY = Math.max.apply(null, maxY);
 
+    // Scale the grid, if needed
     var scale = SVG.getNewXY(minX, maxX, minY, maxY);
-    var coordinates = scale(Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))));
+    var tmp = scale(Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))));
+    var origin = scale(0, 0);
+    var coordinates = {'x': tmp.x - origin.x, 'y': tmp.y - origin.y };
     if(SVG.grid === 'big' || SVG.grid === 'both') {
-        SVG.holder.getElementById('grid').setAttribute('width', coordinates.x);
-        SVG.holder.getElementById('grid').setAttribute('height', coordinates.y);
-        var big_coords = scale(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))))
-        SVG.holder.getElementById('grid').setAttribute('y', big_coords.y);
-        SVG.holder.getElementById('grid').setAttribute('x', big_coords.x);
-        SVG.holder.getElementById('grid').querySelector('path').setAttribute('d', 'M '+coordinates.x+' 0 L 0 0 0 '+coordinates.y);
+        var grid = SVG.holder.getElementById('grid');
+        grid.setAttribute('width', coordinates.x);
+        grid.setAttribute('height', coordinates.y);
+        var big_coords = scale(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))));
+        grid.setAttribute('y', big_coords.y);
+        grid.setAttribute('x', big_coords.x);
+        grid.querySelector('path').setAttribute('d', 'M '+coordinates.x+' 0 L 0 0 0 '+coordinates.y);
 
         if(SVG.grid === 'both') {
-            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('width', coordinates.x);
-            SVG.holder.getElementById('grid').querySelector('rect').setAttribute('height', coordinates.y);
+            grid.querySelector('rect').setAttribute('width', coordinates.x);
+            grid.querySelector('rect').setAttribute('height', coordinates.y);
         }
     }
     if(SVG.grid === 'small' || SVG.grid === 'both') {
         coordinates.x = coordinates.x / 10;
         coordinates.y = coordinates.y / 10;
-        SVG.holder.getElementById('smallGrid').setAttribute('width', coordinates.x);
-        SVG.holder.getElementById('smallGrid').setAttribute('height', coordinates.y);
+        var grid = SVG.holder.getElementById('smallGrid');
+        grid.setAttribute('width', coordinates.x);
+        grid.setAttribute('height', coordinates.y);
         if(SVG.grid === 'small') {
             var small_coords = scale(Math.floor(minX / Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxX - minX) / Math.log(10))), Math.floor(minY / Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10)))) * Math.pow(10, Math.floor(Math.log(maxY - minY) / Math.log(10))));
-            SVG.holder.getElementById('smallGrid').setAttribute('y', small_coords.y);
-            SVG.holder.getElementById('smallGrid').setAttribute('x', small_coords.x);
+            grid.setAttribute('y', small_coords.y);
+            grid.setAttribute('x', small_coords.x);
         }
-        SVG.holder.getElementById('smallGrid').querySelector('path').setAttribute('d', 'M '+coordinates.x+' 0 L 0 0 0 '+coordinates.y);
+        grid.querySelector('path').setAttribute('d', 'M '+coordinates.x+' 0 L 0 0 0 '+coordinates.y);
     }
 
     /* Draw axis */
@@ -404,7 +412,6 @@ SVG.scale = function(data) {
 };
 
 // Draw graphs
-// TODO : Finish refactor
 SVG.draw = function() {
     var scale = SVG.scale(SVG.raw_points);
     var x, y, path;
