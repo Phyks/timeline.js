@@ -16,6 +16,8 @@
 // TODO :
 // * X legend
 // * Y axis
+// * Better over handling
+// * Sorting points when adding them
 
 var SVG = {};
 SVG.ns = "http://www.w3.org/2000/svg";
@@ -88,7 +90,6 @@ SVG.clearGraphData = function (graph) {
 };
 
 // Add points to the specified graph
-// TODO : Sort with existing also
 SVG.addPoints = function (graph, data) {
     data.sort(function (a, b) {
         if(a.x < b.x) {
@@ -269,7 +270,6 @@ SVG.init = function (arg) {
     SVG.x_callback = arg.x_callback;
 
     SVG.parent_holder.addEventListener('mousemove', function(e) {
-        // TODO : Better over effect ?
         var evt = e || window.event;
         var rect = false;
 
@@ -287,7 +287,6 @@ SVG.init = function (arg) {
 };
 
 // Handle the over effect 
-// TODO : Better solution ?
 SVG.overEffect = function(x, y) {
     if(!document.elementFromPoint(x, y)) {
         return;
