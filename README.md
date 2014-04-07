@@ -56,5 +56,6 @@ Feel free to contribute !
 * Over effect is a bit overkill right now
 * You must add your points sorted, as the script won't sort them for you and it may result in very weird graphs
 * Onclick events not working when there are multiple graphs.
+* Choose between line / points / bars
 
 The last three points are easy to implement by refactoring the way the raw points are stored and using a single array for all the graphs.
