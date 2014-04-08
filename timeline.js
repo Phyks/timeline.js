@@ -265,54 +265,7 @@ SVG.init = function (arg) {
     SVG.fill = arg.fill;
 
     SVG.x_callback = arg.x_callback;
-
-    /* TODO
-    SVG.parent_holder.addEventListener('mousemove', function(e) {
-        var evt = e || window.event;
-        var rect = false;
-
-        // Reinitialize all states
-        var rects = SVG.holder.querySelectorAll('.over');
-        for(rect = 0; rect < rects.length; rect ++) {
-            SVG.holder.getElementById(rects[rect].getAttribute('id').replace('over', 'point')).setAttribute('r', '4');
-            if(SVG.labels[graph][parseInt(rects[rect].getAttribute('id').replace('over_', ''))] !== '') {
-                SVG.holder.getElementById(rects[rect].getAttribute('id').replace('over', 'label')).setAttribute('display', 'none');
-            }
-        }
-
-        SVG.overEffect(evt.clientX, evt.clientY);
-    });*/
 };
-
-/* TODO
-// Handle the over effect 
-SVG.overEffect = function(x, y) {
-    if(!document.elementFromPoint(x, y)) {
-        return;
-    }
-
-    // Recursive function to pass event to all superposed rects
-    var rect = document.elementFromPoint(x, y);
-    
-    if(!SVG.hasClass(rect, 'over')) {
-        return;
-    }
-
-    // Handle the event on current rect
-    SVG.holder.getElementById(rect.getAttribute('id').replace('over', 'point')).setAttribute('r', '6');
-    if(SVG.labels[graph][parseInt(rect.getAttribute('id').replace('over_', ''))] !== '') {
-        SVG.holder.getElementById(rect.getAttribute('id').replace('over', 'label')).setAttribute('display', 'block');
-    }
-
-    // Hide it
-    rect.setAttribute('display', 'none');
-
-    // Recursive call
-    SVG.overEffect(x, y);
-
-    // Display again the rect element
-    rect.setAttribute('display', 'block');
-};*/
 
 // Get the scale so that graph fits with window
 SVG.scale = function(data) {
@@ -397,7 +350,7 @@ SVG.draw = function() {
 
     for(var point = 0; point < SVG.raw_points.length; point++) {
         var tmp = scale(SVG.raw_points[point].x, SVG.raw_points[point].y);
-        points.push({'x': tmp.x, 'y': tmp.y, 'graph': SVG.raw_points[point].graph, 'click': SVG.raw_points[point].click, 'label': SVG.raw_points[point].label});
+        points.push({'id': point, 'x': tmp.x, 'y': tmp.y, 'graph': SVG.raw_points[point].graph, 'click': SVG.raw_points[point].click, 'label': SVG.raw_points[point].label});
     }
 
     // Draw each graph
@@ -407,11 +360,15 @@ SVG.draw = function() {
 
         // Draw line
         if(SVG.rounded === true) {
-            // TODO
+            var x = new Array(), y = new Array();
+            for(var point = 0; point < filtered_points.length; point++) {
+                x.push(filtered_points[point].x);
+                y.push(filtered_points[point].y);
+            }
             px = SVG.getControlPoints(x);
             py = SVG.getControlPoints(y);
-            for(var point = 0; point < points.length - 1; point++) {
-                path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+x[point+1]+' '+y[point+1]+' ';
+            for(var point = 0; point < filtered_points.length - 1; point++) {
+                path += 'C '+px.p1[point]+' '+py.p1[point]+' '+px.p2[point]+' '+py.p2[point]+' '+filtered_points[point+1].x+' '+filtered_points[point+1].y+' ';
             }
         }
         else {
@@ -436,7 +393,7 @@ SVG.draw = function() {
 
         // Draw points and labels
         for(var point = 0; point < filtered_points.length; point++) {
-            element = SVG.createElement('circle', {'class': 'point', 'id': 'point_'+point+'_'+graph, 'cx': filtered_points[point].x, 'cy': filtered_points[point].y, 'r': 4, 'fill': '#333', 'stroke': SVG.graphs[graph], 'stroke-width': 2});
+            element = SVG.createElement('circle', {'class': 'point', 'id': 'point_'+filtered_points[point].id, 'cx': filtered_points[point].x, 'cy': filtered_points[point].y, 'r': 4, 'fill': '#333', 'stroke': SVG.graphs[graph], 'stroke-width': 2});
             SVG.g.insertBefore(element, SVG.g.querySelectorAll('.label')[0]);
 
             if(filtered_points[point].click !== false) {
@@ -444,13 +401,13 @@ SVG.draw = function() {
             }
 
             if(filtered_points[point].label !== '') {
-                var g = SVG.createElement('g', { 'class': 'label', 'id': 'label_'+point+'_'+graph, 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
+                var g = SVG.createElement('g', { 'class': 'label', 'id': 'label_'+filtered_points[point].id, 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
                 SVG.g.appendChild(g);
 
                 element = SVG.createElement('text', {});
                 var text = filtered_points[point].label.replace('</sup>', '<sup>').split('<sup>');
                 for(var i = 0; i < text.length; i++) {
-                    text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%y', filtered_points[point].y).replace('%x', filtered_points[point].x);
+                    text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%y', SVG.raw_points[point].y).replace('%x', SVG.raw_points[point].x);
                     if(i % 2 == 0) {
                         element.appendChild(document.createTextNode(text[i]));
 
@@ -506,50 +463,102 @@ SVG.draw = function() {
         }
     }
 
-    /*for(var point = 0; point < points.x.length; point++) {
+    // Hover effect
+    for(var point = 0; point < points.length; point++) {
         var rect = SVG.createElement('rect', {'class': 'over', 'id': 'over_'+point+'_'+graph, 'y': 0, 'fill': 'white', 'opacity': 0, 'height': '100%'});
+        var currents = [point];
+
+        var next = 0;
+        if(point < points.length - 1) {
+            var i = point + 1;
+            next = points[i].x;
+            while(next == points[point].x) {
+                if(i > points.length) {
+                    break;
+                }
+                currents.push(i);
+                i++;
+                next = points[i].x;
+            }
+        }
+
+        var prev = 0;
+        if(point > 0) {
+            i = point - 1;
+            prev = points[i].x;
+            while(prev == points[point].x) {
+                if(i < 0) {
+                    break;
+                }
+                currents.push(i);
+                i--;
+                prev = points[i].x;
+            }
+        }
+
         if(point == 0) {
             rect.setAttribute('x', 0);
         }
         else {
-            rect.setAttribute('x', (points.x[point] + points.x[point - 1]) / 2);
+            rect.setAttribute('x', (points[point].x + prev) / 2);
         }
 
-        if(point == SVG.raw_points.length - 1) {
-            rect.setAttribute('width', SVG.parent_holder.offsetWidth - (points.x[point] + points.x[point - 1])/2);
+        if(point == points.length - 1) {
+            rect.setAttribute('width', SVG.parent_holder.offsetWidth - (points[point].x + points[point - 1].x)/2);
         }
         else if(point == 0) {
-            rect.setAttribute('width', (points.x[1] + points.x[0])/2 + SVG.marginLeft);
+            rect.setAttribute('width', (points[1].x + points[0].x)/2 + SVG.marginLeft);
         }
         else {
-            rect.setAttribute('width', (points.x[point + 1] - points.x[point - 1])/2);
+            rect.setAttribute('width', (next - prev)/2);
         }
+
         SVG.g.appendChild(rect);
-        /*
-           rect.onclick = (function(x, y) {
-           return function(e) {
-           var evt = e || window.event;
 
-           var X = evt.clientX - x;
-           var Y = this.getBoundingClientRect().bottom - evt.clientY - y;
-           if(X <= 5 &&  X >= -5 && Y <= 5 && Y >= -5) {
-           SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).onclick();
-           }
-           }
-           })(x[point], y[point]);
+        rect.addEventListener('mouseover', (function(arg) {
+            return function() {
+                // Reinitialize all states
+                [].forEach.call(SVG.holder.querySelectorAll('.point'), function(el) {
+                    el.setAttribute('r', '4');
+                });
 
-           if(SVG.x_callback !== false) {
-           element = SVG.createElement('text', {'class': 'legend_x', 'fill': 'gray', 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
-           element.appendChild(document.createTextNode(SVG.x_callback(x[point])));
-           SVG.g.appendChild(element);
-           element.setAttribute('x', x[point] - element.getBoundingClientRect().width / 2 + 2.5);
-           var y_zero = scale(0, 0).y
-           element.setAttribute('y', SVG.parent_holder.offsetHeight - SVG.marginBottom - y_zero);
+                [].forEach.call(SVG.holder.querySelectorAll('.label'), function(el) {
+                    el.setAttribute('display', 'none');
+                });
 
-           element = SVG.createElement('line', {'class': 'legend_x', 'stroke': 'gray', 'stroke-width': 2, 'x1': x[point], 'x2': x[point], 'y1': y_zero - 5, 'y2': y_zero + 5});
-           SVG.g.appendChild(element);
-           }
-    }*/
+                for(var i = 0; i < arg.length; i++) {
+                    SVG.holder.getElementById('point_'+arg[i]).setAttribute('r', '6');
+                    SVG.holder.getElementById('label_'+arg[i]).setAttribute('display', 'block');
+                }
+            };
+        })(currents));
+
+        /* TODO
+        rect.onclick = (function(x, y) {
+            return function(e) {
+                var evt = e || window.event;
+
+                var X = evt.clientX - x;
+                var Y = this.getBoundingClientRect().bottom - evt.clientY - y;
+                if(X <= 5 &&  X >= -5 && Y <= 5 && Y >= -5) {
+                    SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).onclick();
+                }
+            }
+        })(x[point], y[point]);*/
+
+        /* TODO
+        if(SVG.x_callback !== false) {
+            element = SVG.createElement('text', {'class': 'legend_x', 'fill': 'gray', 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
+            element.appendChild(document.createTextNode(SVG.x_callback(x[point])));
+            SVG.g.appendChild(element);
+            element.setAttribute('x', x[point] - element.getBoundingClientRect().width / 2 + 2.5);
+            var y_zero = scale(0, 0).y
+                element.setAttribute('y', SVG.parent_holder.offsetHeight - SVG.marginBottom - y_zero);
+
+            element = SVG.createElement('line', {'class': 'legend_x', 'stroke': 'gray', 'stroke-width': 2, 'x1': x[point], 'x2': x[point], 'y1': y_zero - 5, 'y2': y_zero + 5});
+            SVG.g.appendChild(element);
+        }*/
+    }
 };
 
 var old = window.onresize || function () {};

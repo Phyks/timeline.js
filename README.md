@@ -55,7 +55,5 @@ Feel free to contribute !
 
 * Legend on X axis is not implemented
 * Y axis is not implemented, but could be implemented easily
-* Over effect is a bit overkill right now
 * Onclick events not working when there are multiple graphs.
-
-The last two points are easy to implement by refactoring the way the raw points are stored and using a single array for all the graphs.
+* Minor bugfixes with z-index
