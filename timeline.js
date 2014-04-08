@@ -451,7 +451,7 @@ SVG.draw = function() {
                 });
             });
 
-        if(SVG.x_callback !== false) {
+        if(SVG.x_callback !== false && points[point].x + 2.5 < SVG.parent_holder.offsetWidth - SVG.marginRight) {
             element = SVG.createElement('text', {'class': 'legend_x', 'fill': 'gray', 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
             element.appendChild(document.createTextNode(SVG.x_callback(SVG.raw_points[point].x)));
             SVG.g.appendChild(element);

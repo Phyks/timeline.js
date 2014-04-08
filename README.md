@@ -6,6 +6,16 @@ Timeline.js is a lightweight JS library to plot graphs using SVG. As it uses SVG
 
 I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k thanks to obfuscation. Better results may be obtained with a little refactor, but that's enough for me. Plus it can be very easily customised to fit your needs.
 
+## Live demos
+
+* [Single graph example](http://phyks.github.io/timeline.js/examples/index.html)
+* [Multi graph example](http://phyks.github.io/timeline.js/examples/index2.html)
+* [Rounded graph example](http://phyks.github.io/timeline.js/examples/index3.html)
+* [Dashed graph example](http://phyks.github.io/timeline.js/examples/index4.html)
+* [Line only graph example](http://phyks.github.io/timeline.js/examples/index5.html)
+* [Graph with legend example](http://phyks.github.io/timeline.js/examples/index6.html)
+* [Interactivity with points example](http://phyks.github.io/timeline.js/examples/index7.html)
+
 ## Usage
 
 (See examples for more info. For live examples, see http://phyks.github.io/timeline.js/)
