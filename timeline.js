@@ -390,77 +390,6 @@ SVG.draw = function() {
             element = SVG.createElement('path', {'class': 'graph', 'fill': SVG.graphs[graph], 'opacity': '0.25', 'stroke': 'none', 'd': 'M '+filtered_points[0].x+' '+2*SVG.marginBottom+' L '+filtered_points[0].x+' '+filtered_points[0].y+' '+ path + ' L '+filtered_points[filtered_points.length - 1].x+' '+2*SVG.marginBottom+' Z' });
             SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
         }
-
-        // Draw points and labels
-        for(var point = 0; point < filtered_points.length; point++) {
-            element = SVG.createElement('circle', {'class': 'point', 'id': 'point_'+filtered_points[point].id, 'cx': filtered_points[point].x, 'cy': filtered_points[point].y, 'r': 4, 'fill': '#333', 'stroke': SVG.graphs[graph], 'stroke-width': 2});
-            SVG.g.insertBefore(element, SVG.g.querySelectorAll('.label')[0]);
-
-            if(filtered_points[point].click !== false) {
-                element.onclick = filtered_points[point].click;
-            }
-
-            if(filtered_points[point].label !== '') {
-                var g = SVG.createElement('g', { 'class': 'label', 'id': 'label_'+filtered_points[point].id, 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
-                SVG.g.appendChild(g);
-
-                element = SVG.createElement('text', {});
-                var text = filtered_points[point].label.replace('</sup>', '<sup>').split('<sup>');
-                for(var i = 0; i < text.length; i++) {
-                    text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%y', SVG.raw_points[point].y).replace('%x', SVG.raw_points[point].x);
-                    if(i % 2 == 0) {
-                        element.appendChild(document.createTextNode(text[i]));
-
-                    }
-                    else {
-                        var tmp = SVG.createElement('tspan', {'dy': '-5'});
-                        tmp.appendChild(document.createTextNode(text[i]));
-                        element.appendChild(tmp);
-                    }
-                }
-
-                path = SVG.createElement('path', {'stroke': 'black', 'stroke-width': 2, 'fill': 'white', 'opacity': 0.5});
-
-                // Append here to have them with the good z-index, update their attributes later
-                g.appendChild(path);
-                g.appendChild(element);
-
-                var x_text = filtered_points[point].x - element.getBoundingClientRect().width / 2;
-                var y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y - 20;
-                var element_width = element.getBoundingClientRect().width;
-                var element_height = element.getBoundingClientRect().height;
-
-                if(filtered_points[point].x - element.getBoundingClientRect().width / 2 < 0) {
-                    x_text = filtered_points[point].x + 20;
-                    y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
-                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
-                }
-                else if(filtered_points[point].y + element.getBoundingClientRect().height + 12 > SVG.parent_holder.offsetHeight) {
-                    x_text = filtered_points[point].x + 20;
-                    y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
-                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
-
-                    if(x_text + element_width > SVG.parent_holder.offsetWidth) {
-                        x_text = filtered_points[point].y - element_width - 20;
-                        y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
-                        path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
-                    }
-                }
-                else if(filtered_points[point].x + element_width / 2 + 12 > SVG.parent_holder.offsetWidth) {
-                    x_text = filtered_points[point].x - element_width - 20;
-                    y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
-                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
-                }
-                else {
-                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' L '+(x_text + element_width/2 + 2.5)+' '+(y_text + 5)+' L '+(x_text + element_width/2)+' '+(y_text + 10)+' L '+(x_text + element_width/2 - 2.5)+' '+(y_text + 5)+' Z');
-                }
-                element.setAttribute('x', x_text);
-                element.setAttribute('y', y_text);
-    
-
-                g.setAttribute('display', 'none');
-            }
-        }
     }
 
     // Hover effect
@@ -517,6 +446,14 @@ SVG.draw = function() {
 
         rect.addEventListener('mouseover', (function(arg) {
             return function() {
+                for(var i = 0; i < arg.length; i++) {
+                    SVG.holder.getElementById('point_'+arg[i]).setAttribute('r', '6');
+                    SVG.holder.getElementById('label_'+arg[i]).setAttribute('display', 'block');
+                }
+            };
+        })(currents));
+
+        rect.addEventListener('mouseout', function() {
                 // Reinitialize all states
                 [].forEach.call(SVG.holder.querySelectorAll('.point'), function(el) {
                     el.setAttribute('r', '4');
@@ -525,26 +462,7 @@ SVG.draw = function() {
                 [].forEach.call(SVG.holder.querySelectorAll('.label'), function(el) {
                     el.setAttribute('display', 'none');
                 });
-
-                for(var i = 0; i < arg.length; i++) {
-                    SVG.holder.getElementById('point_'+arg[i]).setAttribute('r', '6');
-                    SVG.holder.getElementById('label_'+arg[i]).setAttribute('display', 'block');
-                }
-            };
-        })(currents));
-
-        /* TODO
-        rect.onclick = (function(x, y) {
-            return function(e) {
-                var evt = e || window.event;
-
-                var X = evt.clientX - x;
-                var Y = this.getBoundingClientRect().bottom - evt.clientY - y;
-                if(X <= 5 &&  X >= -5 && Y <= 5 && Y >= -5) {
-                    SVG.holder.getElementById(this.getAttribute('id').replace('over', 'point')).onclick();
-                }
-            }
-        })(x[point], y[point]);*/
+            });
 
         /* TODO
         if(SVG.x_callback !== false) {
@@ -558,6 +476,81 @@ SVG.draw = function() {
             element = SVG.createElement('line', {'class': 'legend_x', 'stroke': 'gray', 'stroke-width': 2, 'x1': x[point], 'x2': x[point], 'y1': y_zero - 5, 'y2': y_zero + 5});
             SVG.g.appendChild(element);
         }*/
+    }
+
+    for(var graph in SVG.graphs) {
+        var filtered_points = points.filter(function(el) { return el.graph == graph; });
+
+        // Draw points and labels
+        for(var point = 0; point < filtered_points.length; point++) {
+            element = SVG.createElement('circle', {'class': 'point', 'id': 'point_'+filtered_points[point].id, 'cx': filtered_points[point].x, 'cy': filtered_points[point].y, 'r': 4, 'fill': '#333', 'stroke': SVG.graphs[graph], 'stroke-width': 2});
+            SVG.g.insertBefore(element, SVG.g.querySelectorAll('.label')[0]);
+
+            if(filtered_points[point].click !== false) {
+                element.onclick = filtered_points[point].click;
+            }
+
+            if(filtered_points[point].label !== '') {
+                var g = SVG.createElement('g', { 'class': 'label', 'id': 'label_'+filtered_points[point].id, 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
+                SVG.g.appendChild(g);
+
+                element = SVG.createElement('text', {});
+                var text = filtered_points[point].label.replace('</sup>', '<sup>').split('<sup>');
+                for(var i = 0; i < text.length; i++) {
+                    text[i] = text[i].replace(/(<([^>]+)>)/ig,"").replace('%y', SVG.raw_points[filtered_points[point].id].y).replace('%x', SVG.raw_points[filtered_points[point].id].x);
+                    if(i % 2 == 0) {
+                        element.appendChild(document.createTextNode(text[i]));
+
+                    }
+                    else {
+                        var tmp = SVG.createElement('tspan', {'dy': '-5'});
+                        tmp.appendChild(document.createTextNode(text[i]));
+                        element.appendChild(tmp);
+                    }
+                }
+
+                path = SVG.createElement('path', {'stroke': 'black', 'stroke-width': 2, 'fill': 'white', 'opacity': 0.5});
+
+                // Append here to have them with the good z-index, update their attributes later
+                g.appendChild(path);
+                g.appendChild(element);
+
+                var x_text = filtered_points[point].x - element.getBoundingClientRect().width / 2;
+                var y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y - 20;
+                var element_width = element.getBoundingClientRect().width;
+                var element_height = element.getBoundingClientRect().height;
+
+                if(filtered_points[point].x - element.getBoundingClientRect().width / 2 < 0) {
+                    x_text = filtered_points[point].x + 20;
+                    y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+                }
+                else if(filtered_points[point].y + element.getBoundingClientRect().height + 12 > SVG.parent_holder.offsetHeight) {
+                    x_text = filtered_points[point].x + 20;
+                    y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+
+                    if(x_text + element_width > SVG.parent_holder.offsetWidth) {
+                        x_text = filtered_points[point].y - element_width - 20;
+                        y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
+                        path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+                    }
+                }
+                else if(filtered_points[point].x + element_width / 2 + 12 > SVG.parent_holder.offsetWidth) {
+                    x_text = filtered_points[point].x - element_width - 20;
+                    y_text = SVG.parent_holder.offsetHeight - filtered_points[point].y + 5;
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+                }
+                else {
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' L '+(x_text + element_width/2 + 2.5)+' '+(y_text + 5)+' L '+(x_text + element_width/2)+' '+(y_text + 10)+' L '+(x_text + element_width/2 - 2.5)+' '+(y_text + 5)+' Z');
+                }
+                element.setAttribute('x', x_text);
+                element.setAttribute('y', y_text);
+    
+
+                g.setAttribute('display', 'none');
+            }
+        }
     }
 };
 
