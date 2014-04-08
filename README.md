@@ -55,4 +55,3 @@ Feel free to contribute !
 
 * Legend on X axis is not implemented
 * Y axis is not implemented, but could be implemented easily
-* Onclick events not working when there are multiple graphs.

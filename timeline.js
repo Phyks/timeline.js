@@ -393,43 +393,30 @@ SVG.draw = function() {
     }
 
     // Hover effect
-    for(var point = 0; point < points.length; point++) {
-        var rect = SVG.createElement('rect', {'class': 'over', 'id': 'over_'+point+'_'+graph, 'y': 0, 'fill': 'white', 'opacity': 0, 'height': '100%'});
+    var prev = 0;
+    for(var point = 0; point < points.length;) {
+        var rect = SVG.createElement('rect', {'class': 'over', 'id': 'over_'+point, 'y': 0, 'fill': 'white', 'opacity': 0, 'height': '100%'});
         var currents = [point];
 
-        var next = 0;
+        var next = point + 1;
         if(point < points.length - 1) {
-            var i = point + 1;
-            next = points[i].x;
-            while(next == points[point].x) {
+            while(points[next].x == points[point].x) {
                 if(i > points.length) {
                     break;
                 }
-                currents.push(i);
-                i++;
-                next = points[i].x;
+                next++;
             }
         }
 
-        var prev = 0;
-        if(point > 0) {
-            i = point - 1;
-            prev = points[i].x;
-            while(prev == points[point].x) {
-                if(i < 0) {
-                    break;
-                }
-                currents.push(i);
-                i--;
-                prev = points[i].x;
-            }
+        for(var i = prev + 1; i < next; i++) {
+            currents.push(i);
         }
 
         if(point == 0) {
             rect.setAttribute('x', 0);
         }
         else {
-            rect.setAttribute('x', (points[point].x + prev) / 2);
+            rect.setAttribute('x', (points[point].x + points[prev].x) / 2);
         }
 
         if(point == points.length - 1) {
@@ -439,7 +426,7 @@ SVG.draw = function() {
             rect.setAttribute('width', (points[1].x + points[0].x)/2 + SVG.marginLeft);
         }
         else {
-            rect.setAttribute('width', (next - prev)/2);
+            rect.setAttribute('width', (points[next].x - points[prev].x)/2);
         }
 
         SVG.g.appendChild(rect);
@@ -476,12 +463,15 @@ SVG.draw = function() {
             element = SVG.createElement('line', {'class': 'legend_x', 'stroke': 'gray', 'stroke-width': 2, 'x1': x[point], 'x2': x[point], 'y1': y_zero - 5, 'y2': y_zero + 5});
             SVG.g.appendChild(element);
         }*/
+
+        prev = next - 1;
+        point = next;
     }
 
+    // Draw points and labels
     for(var graph in SVG.graphs) {
         var filtered_points = points.filter(function(el) { return el.graph == graph; });
 
-        // Draw points and labels
         for(var point = 0; point < filtered_points.length; point++) {
             element = SVG.createElement('circle', {'class': 'point', 'id': 'point_'+filtered_points[point].id, 'cx': filtered_points[point].x, 'cy': filtered_points[point].y, 'r': 4, 'fill': '#333', 'stroke': SVG.graphs[graph], 'stroke-width': 2});
             SVG.g.insertBefore(element, SVG.g.querySelectorAll('.label')[0]);
@@ -490,9 +480,19 @@ SVG.draw = function() {
                 element.onclick = filtered_points[point].click;
             }
 
+            element.addEventListener('mouseover', function() {
+                this.setAttribute('r', '6');
+                SVG.holder.getElementById(this.getAttribute('id').replace('point', 'label')).setAttribute('display', 'block');
+            });
+
             if(filtered_points[point].label !== '') {
                 var g = SVG.createElement('g', { 'class': 'label', 'id': 'label_'+filtered_points[point].id, 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
                 SVG.g.appendChild(g);
+
+                g.addEventListener('mouseover', function() {
+                    SVG.holder.getElementById(this.getAttribute('id').replace('label', 'point')).setAttribute('r', '6');
+                    this.setAttribute('display', 'block');
+                });
 
                 element = SVG.createElement('text', {});
                 var text = filtered_points[point].label.replace('</sup>', '<sup>').split('<sup>');
