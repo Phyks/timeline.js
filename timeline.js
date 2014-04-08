@@ -420,13 +420,13 @@ SVG.draw = function() {
         }
 
         if(point == points.length - 1) {
-            rect.setAttribute('width', SVG.parent_holder.offsetWidth - (points[point].x + points[point - 1].x)/2);
+            rect.setAttribute('width', SVG.parent_holder.offsetWidth - (points[point].x + points[point - 1].x)/2 + 1);
         }
         else if(point == 0) {
-            rect.setAttribute('width', (points[1].x + points[0].x)/2 + SVG.marginLeft);
+            rect.setAttribute('width', (points[1].x + points[0].x)/2 + SVG.marginLeft + 1);
         }
         else {
-            rect.setAttribute('width', (points[next].x - points[prev].x)/2);
+            rect.setAttribute('width', (points[next].x - points[prev].x)/2 + 1);
         }
 
         SVG.g.appendChild(rect);
@@ -451,18 +451,17 @@ SVG.draw = function() {
                 });
             });
 
-        /* TODO
         if(SVG.x_callback !== false) {
             element = SVG.createElement('text', {'class': 'legend_x', 'fill': 'gray', 'transform': 'translate(0, ' + SVG.parent_holder.offsetHeight + ') scale(1, -1)'});
-            element.appendChild(document.createTextNode(SVG.x_callback(x[point])));
+            element.appendChild(document.createTextNode(SVG.x_callback(SVG.raw_points[point].x)));
             SVG.g.appendChild(element);
-            element.setAttribute('x', x[point] - element.getBoundingClientRect().width / 2 + 2.5);
-            var y_zero = scale(0, 0).y
-                element.setAttribute('y', SVG.parent_holder.offsetHeight - SVG.marginBottom - y_zero);
+            element.setAttribute('x', points[point].x - element.getBoundingClientRect().width / 2 + 2.5);
+            var y_zero = scale(0, 0).y;
+            element.setAttribute('y', SVG.parent_holder.offsetHeight - SVG.marginBottom - y_zero);
 
-            element = SVG.createElement('line', {'class': 'legend_x', 'stroke': 'gray', 'stroke-width': 2, 'x1': x[point], 'x2': x[point], 'y1': y_zero - 5, 'y2': y_zero + 5});
+            element = SVG.createElement('line', {'class': 'legend_x', 'stroke': 'gray', 'stroke-width': 2, 'x1': points[point].x, 'x2': points[point].x, 'y1': y_zero - 5, 'y2': y_zero + 5});
             SVG.g.appendChild(element);
-        }*/
+        }
 
         prev = next - 1;
         point = next;
