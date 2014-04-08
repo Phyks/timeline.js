@@ -4,7 +4,7 @@ Timeline.js
 
 Timeline.js is a lightweight JS library to plot graphs using SVG. As it uses SVG, you can add event listeners on the plotted graph very easily.
 
-I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k thanks to obfuscation. Better results may be obtained with a little refactor, but that's enough for me.
+I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k thanks to obfuscation. Better results may be obtained with a little refactor, but that's enough for me. Plus it can be very easily customised to fit your needs.
 
 ## Usage
 
@@ -32,7 +32,7 @@ Finally, you can draw the SVG thanks to `SVG.draw();`.
 
 ## Other functions
 
-* `SVG.clearGraph(GRAPH);` to delete the data for the graph GRAPH, or for all graphs if GRAPH is not specified.
+* `SVG.clearGraph(GRAPH);` to delete the data for the graph GRAPH, or for all graphs + the graphs definition if GRAPH is not specified.
 * `SVG.hasGraph(GRAPH);` to check if a graph with name GRAPH has already been defined or not.
 
 ## License
@@ -56,7 +56,6 @@ Feel free to contribute !
 * Legend on X axis is not implemented
 * Y axis is not implemented, but could be implemented easily
 * Over effect is a bit overkill right now
-* You must add your points sorted, as the script won't sort them for you and it may result in very weird graphs
 * Onclick events not working when there are multiple graphs.
 
-The last three points are easy to implement by refactoring the way the raw points are stored and using a single array for all the graphs.
+The last two points are easy to implement by refactoring the way the raw points are stored and using a single array for all the graphs.
