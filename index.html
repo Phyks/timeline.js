@@ -33,16 +33,20 @@
 
 <p>Timeline.js is a lightweight JS library to plot graphs using SVG. As it uses SVG, you can add event listeners on the plotted graph very easily.</p>
 
-<p>I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k thanks to obfuscation. Better results may be obtained with a little refactor, but that's enough for me.</p>
-
-<h2>Examples</h2>
-<ul>
-    <li><a href="http://phyks.github.io/timeline.js/examples/index.html">Multi graphs example</a></li>
-    <li><a href="http://phyks.github.io/timeline.js/examples/index2.html">Single graph example</a></li>
-    <li><a href="http://phyks.github.io/timeline.js/examples/index3.html">Rounded graph example</a></li>
-</ul>
+<p>I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k thanks to obfuscation. Better results may be obtained with a little refactor, but that's enough for me. Plus it can be very easily customised to fit your needs.</p>
 
 <h2>
+<a name="live-demos" class="anchor" href="#live-demos"><span class="octicon octicon-link"></span></a>Live demos</h2>
+
+<ul>
+<li><a href="http://phyks.github.io/timeline.js/examples/index.html">Single graph example</a></li>
+<li><a href="http://phyks.github.io/timeline.js/examples/index2.html">Multi graph example</a></li>
+<li><a href="http://phyks.github.io/timeline.js/examples/index3.html">Rounded graph example</a></li>
+<li><a href="http://phyks.github.io/timeline.js/examples/index4.html">Dashed graph example</a></li>
+<li><a href="http://phyks.github.io/timeline.js/examples/index5.html">Line only graph example</a></li>
+<li><a href="http://phyks.github.io/timeline.js/examples/index6.html">Graph with legend example</a></li>
+<li><a href="http://phyks.github.io/timeline.js/examples/index7.html">Interactivity with points example</a></li>
+</ul><h2>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
 
 <p>(See examples for more info. For live examples, see <a href="http://phyks.github.io/timeline.js/">http://phyks.github.io/timeline.js/</a>)</p>
@@ -61,9 +65,13 @@
 <li>
 <code>x_axis</code> : true / false to show / hide the x axis</li>
 <li>
+<code>line</code> : none / line / dashed to choose line type. You can edit the dasharray by replacing <code>SVG.dash_style</code> value</li>
+<li>
+<code>fill</code> : true / false to fill the area below the graph or not</li>
+<li>
 <code>rounded</code> : true / false to use splines to smoothen the graph or not</li>
 <li>
-<code>x_callback</code> : callback function to call to get texts for the x legend. Not yet implemented.</li>
+<code>x_callback</code> : callback function to call to get texts for the x legend. Not yet implemented</li>
 </ul><p>Then, you can add as many graphs as you want, thanks to <code>SVG.addGraph(NAME, COLOR);</code> where COLOR must be a valid CSS color.
 And you can add points thanks to <code>SVG.addPoints(GRAPH_NAME, POINTS);</code>. Points is an array of point objects, which are of the type <code>{'x': ABSCISSA, 'y': ORDINATE, 'label': LABEL}</code>. LABEL is the text to display in the infobox when the mouse is over the point. You can use '%x' and '%y' in labels and they will be automatically replaced by the coordinates. You can also use <code>&lt;sup&gt;</code> and <code>&lt;sub&gt;</code> HTML tags. You can add another (optional) element <code>click</code> which must be a ffunction to bind to onclick event on this point.</p>
 
@@ -76,7 +84,7 @@ And you can add points thanks to <code>SVG.addPoints(GRAPH_NAME, POINTS);</code>
 
 <ul>
 <li>
-<code>SVG.clearGraph(GRAPH);</code> to delete the data for the graph GRAPH, or for all graphs if GRAPH is not specified.</li>
+<code>SVG.clearGraph(GRAPH);</code> to delete the data for the graph GRAPH, or for all graphs + the graphs definition if GRAPH is not specified.</li>
 <li>
 <code>SVG.hasGraph(GRAPH);</code> to check if a graph with name GRAPH has already been defined or not.</li>
 </ul><h2>
@@ -99,12 +107,8 @@ And you can add points thanks to <code>SVG.addPoints(GRAPH_NAME, POINTS);</code>
 <p>Feel free to contribute !</p>
 
 <ul>
-<li>Legend on X axis is not implemented</li>
 <li>Y axis is not implemented, but could be implemented easily</li>
-<li>Over effect is a bit overkill right now</li>
-<li>You must add your points sorted, as the script won't sort them for you and it may result in very weird graphs</li>
-<li>Onclick events not working when there are multiple graphs.</li>
-</ul><p>The last three points are easy to implement by refactoring the way the raw points are stored and using a single array for all the graphs.</p>
+</ul>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/Phyks">Phyks</a></p>
