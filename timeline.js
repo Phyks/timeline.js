@@ -13,12 +13,6 @@
  * ---------------------------------------------------------------------------------
  */
 
-// TODO :
-// * X legend
-// * Y axis
-// * Better over handling
-// * Sorting points when adding them
-
 var SVG = {};
 SVG.ns = "http://www.w3.org/2000/svg";
 SVG.xlinkns = "http://www.w3.org/1999/xlink";
@@ -29,6 +23,9 @@ SVG.marginLeft = 10;
 SVG.marginRight = 10;
 SVG.rounded = false;
 SVG.x_axis = false;
+SVG.fill = true;
+SVG.line = 'line';
+SVG.dashed_style = '5, 5';
 
 SVG.parent_holder = false;
 SVG.holder = false;
@@ -198,8 +195,10 @@ SVG.getControlPoints = function (data) {
  * height / width = size of the svg
  * grid = small / big / both
  * x_axis = true / false to show or hide x axis
+ * line = none / line / dashed to choose line type
  * rounded = true / false to use splines to smoothen the graph
  * x_callback = function(args) { } or false is called to display the legend on the x axis
+ * fill = true / false to fill below the graph or not
  */
 SVG.init = function (arg) {
     if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
@@ -266,6 +265,8 @@ SVG.init = function (arg) {
 
     SVG.rounded = arg.rounded;
     SVG.x_axis = arg.x_axis;
+    SVG.line = arg.line;
+    SVG.fill = arg.fill;
 
     SVG.x_callback = arg.x_callback;
 
@@ -441,11 +442,18 @@ SVG.draw = function() {
                 path += 'L '+x[point]+' '+y[point]+' ';
             }
         }
-        element = SVG.createElement('path', {'class': 'graph', 'fill': SVG.raw_points[graph].color, 'opacity': '0.25', 'stroke': 'none', 'd': 'M '+x[0]+' '+2*SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+2*SVG.marginBottom+' Z' });
-        SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
+        if(SVG.fill) {
+            element = SVG.createElement('path', {'class': 'graph', 'fill': SVG.raw_points[graph].color, 'opacity': '0.25', 'stroke': 'none', 'd': 'M '+x[0]+' '+2*SVG.marginBottom+' L '+x[0]+' '+y[0]+' '+ path + ' L '+x[SVG.raw_points[graph].data.length - 1]+' '+2*SVG.marginBottom+' Z' });
+            SVG.g.insertBefore(element, SVG.g.querySelectorAll('.over')[0]);
+        }
 
-        element = SVG.createElement('path', {'class': 'line', 'stroke': SVG.raw_points[graph].color, 'stroke-width': 2, 'fill': 'none', 'd': 'M '+x[0]+' '+y[0]+' '+path});
-        SVG.g.appendChild(element);
+        if(SVG.line !== 'none') {
+            element = SVG.createElement('path', {'class': 'line', 'stroke': SVG.raw_points[graph].color, 'stroke-width': 2, 'fill': 'none', 'd': 'M '+x[0]+' '+y[0]+' '+path});
+            if(SVG.line === 'dashed') {
+                element.setAttribute('style', 'stroke-dasharray: '+SVG.dashed_style);
+            }
+            SVG.g.appendChild(element);
+        }
 
         for(var point = 0; point < SVG.raw_points[graph].data.length; point++) {
             element = SVG.createElement('circle', {'class': 'point', 'id': 'point_'+point+'_'+graph, 'cx': x[point], 'cy': y[point], 'r': 4, 'fill': '#333', 'stroke': SVG.raw_points[graph].color, 'stroke-width': 2});

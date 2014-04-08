@@ -18,8 +18,10 @@ Then, you need to init the SVG drawing, thanks to `SVG.init({'id': 'holder', 'he
 * `width` / `height` : width and height of the created SVG
 * `grid` : none / small / big / both to choose which type of grid you want
 * `x_axis` : true / false to show / hide the x axis
+* `line` : none / line / dashed to choose line type. You can edit the dasharray by replacing `SVG.dash_style` value
+* `fill` : true / false to fill the area below the graph or not
 * `rounded` : true / false to use splines to smoothen the graph or not
-* `x_callback` : callback function to call to get texts for the x legend. Not yet implemented.
+* `x_callback` : callback function to call to get texts for the x legend. Not yet implemented
 
 Then, you can add as many graphs as you want, thanks to `SVG.addGraph(NAME, COLOR);` where COLOR must be a valid CSS color.
 And you can add points thanks to `SVG.addPoints(GRAPH_NAME, POINTS);`. Points is an array of point objects, which are of the type `{'x': ABSCISSA, 'y': ORDINATE, 'label': LABEL}`. LABEL is the text to display in the infobox when the mouse is over the point. You can use '%x' and '%y' in labels and they will be automatically replaced by the coordinates. You can also use `<sup>` and `<sub>` HTML tags. You can add another (optional) element `click` which must be a ffunction to bind to onclick event on this point.
