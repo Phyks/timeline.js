@@ -197,7 +197,7 @@ Timeline.getControlPoints = function (data) {
  * fill = true / false to fill below the graph or not
  */
 Timeline.init = function (arg) {
-    if(!document.implementation.hasFeature("http://www.w3.org/TR/Timeline11/feature#Image", "1.1")) {
+    if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
         alert("ERROR : Your browser does not support embedded Timeline.");
     }
     Timeline.parent_holder = document.getElementById(arg.id);
