@@ -12,12 +12,12 @@
     <div id="holder"></div>
     <script type="text/javascript" src="../timeline.js"></script>
     <script type="text/javascript">
-        SVG.init({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'line': 'none', 'rounded': false, 'fill': false, 'x_callback': false});
+        Timeline.init({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'line': 'none', 'rounded': false, 'fill': false, 'x_callback': false});
 
-        SVG.addGraph('test', 'red');
-        SVG.addPoints('test', [{'x':200, 'y':50, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':75, 'y':100, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':150,'y':25, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':175, 'y':-200, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':125, 'y':75, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':225, 'y':-220, 'label':'Click me !', 'click': function() { alert('Hello World…'); }}]);
+        Timeline.addGraph('test', 'red');
+        Timeline.addPoints('test', [{'x':200, 'y':50, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':75, 'y':100, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':150,'y':25, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':175, 'y':-200, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':125, 'y':75, 'label':'Click me !', 'click': function() { alert('Hello World…'); }},{'x':225, 'y':-220, 'label':'Click me !', 'click': function() { alert('Hello World…'); }}]);
         
-        SVG.draw();
+        Timeline.draw();
     </script>
 </body>
 </html>
