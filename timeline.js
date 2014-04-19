@@ -474,6 +474,18 @@ Timeline.prototype.draw = function() {
                 });
             });
 
+        // Clear also the labels when moving outside the SVG element
+        this.holder.addEventListener('mouseout', function() {
+                // Reinitialize all states
+                [].forEach.call(obj.holder.querySelectorAll('.point'), function(el) {
+                    el.setAttribute('r', '4');
+                });
+
+                [].forEach.call(obj.holder.querySelectorAll('.label'), function(el) {
+                    el.setAttribute('display', 'none');
+                });
+            });
+
         if(this.x_callback !== false && points[point].x + 2.5 < this.parent_holder.offsetWidth - this.marginRight) {
             element = this.createElement('text', {'class': 'legend_x', 'fill': 'gray', 'transform': 'translate(0, ' + this.parent_holder.offsetHeight + ') scale(1, -1)'});
             element.appendChild(document.createTextNode(this.x_callback(this.raw_points[point].x)));
