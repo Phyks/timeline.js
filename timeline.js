@@ -56,7 +56,7 @@ function Timeline(arg) {
         if(obj.g !== false) {
             obj.g.setAttribute('transform', 'translate(0, ' + obj.parent_holder.offsetHeight + ') scale(1, -1)');
             if(obj.x_axis === true) {
-                obj.axis.setAttribute('x2', obj.parent_holder.offsetWidth - 13 - obj.marginRight);
+                obj.axis.setAttribute('x2', obj.parent_holder.offsetWidth - obj.marginLeft - 3 - obj.marginRight);
             }
             [].forEach.call(obj.holder.querySelectorAll('.label, .over, .point, .line, .graph, .legend_x'), function(el) {
                 el.parentNode.removeChild(el);
