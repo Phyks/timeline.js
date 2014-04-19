@@ -70,7 +70,9 @@ function Timeline(arg) {
     }
     this.parent_holder = document.getElementById(arg.id);
 
-    var svg = this.createElement('svg:svg', { 'width': arg.width, 'height': arg.height });
+    this.parent_holder.style.width = arg.width;
+    this.parent_holder.style.height = arg.height;
+    var svg = this.createElement('svg:svg', { 'width': '100%', 'height': '100%' });
     svg.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:xlink', this.xlinkns);
     this.parent_holder.appendChild(svg);
 

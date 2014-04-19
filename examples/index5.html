@@ -12,12 +12,12 @@
     <div id="holder"></div>
     <script type="text/javascript" src="../timeline.js"></script>
     <script type="text/javascript">
-        Timeline.init({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'line': 'none', 'rounded': false, 'fill': false, 'x_callback': false});
+        var tl = new Timeline({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'line': 'none', 'rounded': false, 'fill': false, 'x_callback': false});
 
-        Timeline.addGraph('test', 'red');
-        Timeline.addPoints('test', [{'x':200, 'y':50, 'label':'%x : %y test. Click me !', 'click': function() { alert('Hello World…'); }},{'x':75, 'y':100, 'label':'%x : %y test2'},{'x':150,'y':25, 'label':'%x : %y test3'},{'x':175, 'y':-200, 'label':'%x : %y test4'},{'x':125, 'y':75, 'label':'%x : %y µg/m<sup>3</sup>'},{'x':225, 'y':-220, 'label':'%x : %y test4'}]);
+        tl.addGraph('test', 'red');
+        tl.addPoints('test', [{'x':200, 'y':50, 'label':'%x : %y test. Click me !', 'click': function() { alert('Hello World…'); }},{'x':75, 'y':100, 'label':'%x : %y test2'},{'x':150,'y':25, 'label':'%x : %y test3'},{'x':175, 'y':-200, 'label':'%x : %y test4'},{'x':125, 'y':75, 'label':'%x : %y µg/m<sup>3</sup>'},{'x':225, 'y':-220, 'label':'%x : %y test4'}]);
         
-        Timeline.draw();
+        tl.draw();
     </script>
 </body>
 </html>

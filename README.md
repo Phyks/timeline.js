@@ -15,6 +15,7 @@ I coded it because I couldn't find any basic JS library to do this, without any 
 * [Line only graph example](http://phyks.github.io/timeline.js/examples/index5.html)
 * [Graph with legend example](http://phyks.github.io/timeline.js/examples/index6.html)
 * [Interactivity with points example](http://phyks.github.io/timeline.js/examples/index7.html)
+* [Multiple holders example](http://phyks.github.io/timeline.js/examples/index8.html)
 
 ## Usage
 
@@ -23,7 +24,7 @@ I coded it because I couldn't find any basic JS library to do this, without any 
 
 First, you must include the `timeline.js` or `timeline.min.js` script.
 
-Then, you need to init the Timeline drawing, using `Timeline.init({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'rounded': false, 'x_callback': false});`. The arguments are all optional and are:
+Then, you need to init a Timeline object, using something like `var tl = new Timeline({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'rounded': false, 'x_callback': false});`. The arguments are all optional and are:
 * `id` : the id of the parent element that will contain the Timeline
 * `width` / `height` : width and height of the created Timeline
 * `grid` : none / small / big / both to choose which type of grid you want
@@ -33,17 +34,19 @@ Then, you need to init the Timeline drawing, using `Timeline.init({'id': 'holder
 * `rounded` : true / false to use splines to smoothen the graph or not
 * `x_callback` : callback function to call to get texts for the x legend. Not yet implemented
 
-Then, you can add as many graphs as you want, with `Timeline.addGraph(NAME, COLOR);` where COLOR must be a valid CSS color.
-And you can add points using `Timeline.addPoints(GRAPH_NAME, POINTS);`. Points is an array of point objects, which are of the type `{'x': ABSCISSA, 'y': ORDINATE, 'label': LABEL}`. LABEL is the text to display in the infobox when the mouse is over the point. You can use '%x' and '%y' in labels and they will be automatically replaced by the coordinates. You can also use `<sup>` and `<sub>` HTML tags. You can add another (optional) element `click` which must be a ffunction to bind to onclick event on this point.
+_Note :_ One Timeline object corresponds to one holder.
 
-_Note_ : You don't have to sort the points inside a same list of points in a Timeline.addGraph call. They will be sorted for you. But, if you call Timeline.addPoints multiple times, you must sort the points yourself between each call. The script won't do it for you and it will result in weird graphs if you don't do it.
+Then, you can add as many graphs as you want, with `tl.addGraph(NAME, COLOR);` where COLOR must be a valid CSS color.
+And you can add points using `tl.addPoints(GRAPH_NAME, POINTS);`. Points is an array of point objects, which are of the type `{'x': ABSCISSA, 'y': ORDINATE, 'label': LABEL}`. LABEL is the text to display in the infobox when the mouse is over the point. You can use '%x' and '%y' in labels and they will be automatically replaced by the coordinates. You can also use `<sup>` and `<sub>` HTML tags. You can add another (optional) element `click` which must be a ffunction to bind to onclick event on this point.
 
-Finally, you can draw the Timeline with `Timeline.draw();`.
+_Note_ : You don't have to sort the points inside a same list of points in a tl.addGraph call. They will be sorted for you. But, if you call tl.addPoints multiple times, you must sort the points yourself between each call. The script won't do it for you and it will result in weird graphs if you don't do it.
+
+Finally, you can draw the timeline with `tl.draw();`.
 
 ## Other functions
 
-* `Timeline.clearGraph(GRAPH);` to delete the data for the graph GRAPH, or for all graphs + the graphs definition if GRAPH is not specified.
-* `Timeline.hasGraph(GRAPH);` to check if a graph with name GRAPH has already been defined or not.
+* `tl.clearGraph(GRAPH);` to delete the data for the graph GRAPH, or for all graphs + the graphs definition if GRAPH is not specified.
+* `tl.hasGraph(GRAPH);` to check if a graph with name GRAPH has already been defined or not.
 
 ## License
 
