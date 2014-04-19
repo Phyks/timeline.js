@@ -1,0 +1,36 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Timeline.js example</title>
+    <style type="text/css">
+        body {
+            background-color: #333;
+        }
+
+        #holder2 {
+            margin-top: 10%;
+            width: 50%;
+        }
+    </style>
+</head>
+<body onload="">
+    <div id="holder1"></div>
+    <div id="holder2"></div>
+    <script type="text/javascript" src="../timeline.js"></script>
+    <script type="text/javascript">
+        t1 = new Timeline({'id': 'holder1', 'height': '40%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'line': 'line', 'rounded': false, 'fill': true, 'x_callback': false});
+
+        t1.addGraph('test', 'red');
+        t1.addPoints('test', [{'x':200, 'y':50, 'label':'%x : %y test. Click me !', 'click': function() { alert('Hello World…'); }},{'x':75, 'y':100, 'label':'%x : %y test2'},{'x':150,'y':25, 'label':'%x : %y test3'},{'x':175, 'y':-200, 'label':'%x : %y test4'},{'x':125, 'y':75, 'label':'%x : %y µg/m<sup>3</sup>'},{'x':225, 'y':-220, 'label':'%x : %y test4'}]);
+        
+        t1.draw();
+
+        t2 = new Timeline({'id': 'holder2', 'height': '40%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'line': 'line', 'rounded': false, 'fill': true, 'x_callback': false});
+
+        t2.addGraph('test', 'red');
+        t2.addPoints('test', [{'x':200, 'y':50, 'label':'%x : %y test. Click me !', 'click': function() { alert('Hello World…'); }},{'x':75, 'y':100, 'label':'%x : %y test2'},{'x':150,'y':25, 'label':'%x : %y test3'},{'x':175, 'y':-200, 'label':'%x : %y test4'},{'x':125, 'y':75, 'label':'%x : %y µg/m<sup>3</sup>'},{'x':225, 'y':-220, 'label':'%x : %y test4'}]);
+        
+        t2.draw();
+    </script>
+</body>
+</html>
