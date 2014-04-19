@@ -47,6 +47,24 @@ function Timeline(arg) {
     this.raw_points = [];
     this.x_callback = false;
 
+    var old = window.onresize || function () {};
+    var obj = this;
+    window.onresize = function() {
+        old();
+
+        // Redraw the Timeline to fit the new size
+        if(obj.g !== false) {
+            obj.g.setAttribute('transform', 'translate(0, ' + obj.parent_holder.offsetHeight + ') scale(1, -1)');
+            if(obj.x_axis === true) {
+                obj.axis.setAttribute('x2', obj.parent_holder.offsetWidth - 13 - obj.marginRight);
+            }
+            [].forEach.call(obj.holder.querySelectorAll('.label, .over, .point, .line, .graph, .legend_x'), function(el) {
+                el.parentNode.removeChild(el);
+            });
+            obj.draw();
+        }
+    };
+
     if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
         alert("ERROR : Your browser does not support embedded SVG.");
     }
@@ -553,22 +571,5 @@ Timeline.prototype.draw = function() {
                 g.setAttribute('display', 'none');
             }
         }
-    }
-};
-
-// TODO
-var old = window.onresize || function () {};
-window.onresize = function() {
-    old();
-    // Redraw the Timeline to fit the new size
-    if(Timeline.g !== false) {
-        Timeline.g.setAttribute('transform', 'translate(0, ' + Timeline.parent_holder.offsetHeight + ') scale(1, -1)');
-        if(Timeline.x_axis === true) {
-            Timeline.axis.setAttribute('x2', Timeline.parent_holder.offsetWidth - 13 - Timeline.marginRight);
-        }
-        [].forEach.call(Timeline.holder.querySelectorAll('.label, .over, .point, .line, .graph, .legend_x'), function(el) {
-            el.parentNode.removeChild(el);
-        });
-        Timeline.draw();
     }
 };
