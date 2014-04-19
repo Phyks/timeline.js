@@ -31,9 +31,9 @@
         <h1>
 <a name="timelinejs" class="anchor" href="#timelinejs"><span class="octicon octicon-link"></span></a>Timeline.js</h1>
 
-<p>Timeline.js is a lightweight JS library to plot graphs using SVG. As it uses SVG, you can add event listeners on the plotted graph very easily.</p>
+<p>Timeline.js is a lightweight JS library to plot graphs using Timeline. As it uses Timeline, you can add event listeners on the plotted graph very easily.</p>
 
-<p>I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k thanks to obfuscation. Better results may be obtained with a little refactor, but that's enough for me. Plus it can be very easily customised to fit your needs.</p>
+<p>I coded it because I couldn't find any basic JS library to do this, without any external dependencies and extra features. Timeline.js is only 13k once minified, and can be reduced under 10k with obfuscation. Better results may be obtained with a little refactor, but that's enough for me. Plus it can be very easily customised to fit your needs.</p>
 
 <h2>
 <a name="live-demos" class="anchor" href="#live-demos"><span class="octicon octicon-link"></span></a>Live demos</h2>
@@ -46,6 +46,7 @@
 <li><a href="http://phyks.github.io/timeline.js/examples/index5.html">Line only graph example</a></li>
 <li><a href="http://phyks.github.io/timeline.js/examples/index6.html">Graph with legend example</a></li>
 <li><a href="http://phyks.github.io/timeline.js/examples/index7.html">Interactivity with points example</a></li>
+<li><a href="http://phyks.github.io/timeline.js/examples/index8.html">Multiple holders example</a></li>
 </ul><h2>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
 
@@ -53,40 +54,42 @@
 
 <p>First, you must include the <code>timeline.js</code> or <code>timeline.min.js</code> script.</p>
 
-<p>Then, you need to init the SVG drawing, thanks to <code>SVG.init({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'rounded': false, 'x_callback': false});</code>. The arguments are all optional and are:</p>
+<p>Then, you need to init a Timeline object, using something like <code>var tl = new Timeline({'id': 'holder', 'height': '100%', 'width': '100%', 'grid': 'both', 'x_axis': true, 'rounded': false, 'x_callback': false});</code>. The arguments are all optional and are:</p>
 
 <ul>
 <li>
-<code>id</code> : the id of the parent element that will contain the SVG</li>
+<code>id</code> : the id of the parent element that will contain the Timeline</li>
 <li>
-<code>width</code> / <code>height</code> : width and height of the created SVG</li>
+<code>width</code> / <code>height</code> : width and height of the created Timeline</li>
 <li>
 <code>grid</code> : none / small / big / both to choose which type of grid you want</li>
 <li>
 <code>x_axis</code> : true / false to show / hide the x axis</li>
 <li>
-<code>line</code> : none / line / dashed to choose line type. You can edit the dasharray by replacing <code>SVG.dash_style</code> value</li>
+<code>line</code> : none / line / dashed to choose line type. You can edit the dasharray by replacing <code>Timeline.dash_style</code> value</li>
 <li>
 <code>fill</code> : true / false to fill the area below the graph or not</li>
 <li>
 <code>rounded</code> : true / false to use splines to smoothen the graph or not</li>
 <li>
 <code>x_callback</code> : callback function to call to get texts for the x legend. Not yet implemented</li>
-</ul><p>Then, you can add as many graphs as you want, thanks to <code>SVG.addGraph(NAME, COLOR);</code> where COLOR must be a valid CSS color.
-And you can add points thanks to <code>SVG.addPoints(GRAPH_NAME, POINTS);</code>. Points is an array of point objects, which are of the type <code>{'x': ABSCISSA, 'y': ORDINATE, 'label': LABEL}</code>. LABEL is the text to display in the infobox when the mouse is over the point. You can use '%x' and '%y' in labels and they will be automatically replaced by the coordinates. You can also use <code>&lt;sup&gt;</code> and <code>&lt;sub&gt;</code> HTML tags. You can add another (optional) element <code>click</code> which must be a ffunction to bind to onclick event on this point.</p>
+</ul><p><em>Note :</em> One Timeline object corresponds to one holder.</p>
 
-<p><em>Note</em> : You don't have to sort the points inside a same list of points in a SVG.addGraph call. They will be sorted for you. But, if you call SVG.addPoints multiple times, you must sort the points yourself between each call. The script won't do it for you and it will result in weird graphs if you don't do it.</p>
+<p>Then, you can add as many graphs as you want, with <code>tl.addGraph(NAME, COLOR);</code> where COLOR must be a valid CSS color.
+And you can add points using <code>tl.addPoints(GRAPH_NAME, POINTS);</code>. Points is an array of point objects, which are of the type <code>{'x': ABSCISSA, 'y': ORDINATE, 'label': LABEL}</code>. LABEL is the text to display in the infobox when the mouse is over the point. You can use '%x' and '%y' in labels and they will be automatically replaced by the coordinates. You can also use <code>&lt;sup&gt;</code> and <code>&lt;sub&gt;</code> HTML tags. You can add another (optional) element <code>click</code> which must be a ffunction to bind to onclick event on this point.</p>
 
-<p>Finally, you can draw the SVG thanks to <code>SVG.draw();</code>.</p>
+<p><em>Note</em> : You don't have to sort the points inside a same list of points in a tl.addGraph call. They will be sorted for you. But, if you call tl.addPoints multiple times, you must sort the points yourself between each call. The script won't do it for you and it will result in weird graphs if you don't do it.</p>
+
+<p>Finally, you can draw the timeline with <code>tl.draw();</code>.</p>
 
 <h2>
 <a name="other-functions" class="anchor" href="#other-functions"><span class="octicon octicon-link"></span></a>Other functions</h2>
 
 <ul>
 <li>
-<code>SVG.clearGraph(GRAPH);</code> to delete the data for the graph GRAPH, or for all graphs + the graphs definition if GRAPH is not specified.</li>
+<code>tl.clearGraph(GRAPH);</code> to delete the data for the graph GRAPH, or for all graphs + the graphs definition if GRAPH is not specified.</li>
 <li>
-<code>SVG.hasGraph(GRAPH);</code> to check if a graph with name GRAPH has already been defined or not.</li>
+<code>tl.hasGraph(GRAPH);</code> to check if a graph with name GRAPH has already been defined or not.</li>
 </ul><h2>
 <a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
