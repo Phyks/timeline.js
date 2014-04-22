@@ -550,7 +550,7 @@ Timeline.prototype.draw = function() {
                 g.appendChild(element);
 
                 var x_text = filtered_points[point].x - element.getBoundingClientRect().width / 2;
-                var y_text = this.parent_holder.offsetHeight - filtered_points[point].y - 20;
+                var y_text = this.parent_holder.offsetHeight - filtered_points[point].y - this.marginTop - this.marginBottom;
                 var element_width = element.getBoundingClientRect().width;
                 var element_height = element.getBoundingClientRect().height;
 
@@ -559,19 +559,19 @@ Timeline.prototype.draw = function() {
                     y_text = this.parent_holder.offsetHeight - filtered_points[point].y + 5;
                     path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
                 }
-                else if(filtered_points[point].y + element.getBoundingClientRect().height + 12 > this.parent_holder.offsetHeight) {
-                    x_text = filtered_points[point].x + 20;
+                else if(filtered_points[point].y + element.getBoundingClientRect().height + this.marginBottom + 2 > this.parent_holder.offsetHeight) {
+                    x_text = filtered_points[point].x + this.marginLeft + this.marginRight;
                     y_text = this.parent_holder.offsetHeight - filtered_points[point].y + 5;
-                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
+                    path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - this.marginBottom)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
 
                     if(x_text + element_width > this.parent_holder.offsetWidth) {
-                        x_text = filtered_points[point].y - element_width - 20;
+                        x_text = filtered_points[point].x - element_width - this.marginLeft - this.marginRight;
                         y_text = this.parent_holder.offsetHeight - filtered_points[point].y + 5;
                         path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
                     }
                 }
-                else if(filtered_points[point].x + element_width / 2 + 12 > this.parent_holder.offsetWidth) {
-                    x_text = filtered_points[point].x - element_width - 20;
+                else if(filtered_points[point].x + element_width / 2 + this.marginLeft + 2 > this.parent_holder.offsetWidth) {
+                    x_text = filtered_points[point].x - element_width - this.marginLeft - this.marginRight;
                     y_text = this.parent_holder.offsetHeight - filtered_points[point].y + 5;
                     path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text  - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text + element_width + 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
                 }
