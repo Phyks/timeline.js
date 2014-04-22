@@ -555,7 +555,7 @@ Timeline.prototype.draw = function() {
                 var element_height = element.getBoundingClientRect().height;
 
                 if(filtered_points[point].x - element.getBoundingClientRect().width / 2 < 0) {
-                    x_text = filtered_points[point].x + 20;
+                    x_text = filtered_points[point].x + this.marginLeft + this.marginRight;
                     y_text = this.parent_holder.offsetHeight - filtered_points[point].y + 5;
                     path.setAttribute('d', 'M '+(x_text - 5)+' '+(y_text + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 7.5)+' L '+(x_text - 10)+' '+(y_text - element_height/2 + 5)+' L '+(x_text - 5)+' '+(y_text - element_height/2 + 2.5)+' L '+(x_text - 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text - element_height + 5)+' L '+(x_text + element_width + 5)+' '+(y_text + 5)+' Z');
                 }
