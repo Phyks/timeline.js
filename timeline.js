@@ -400,7 +400,7 @@ Timeline.prototype.draw = function() {
             }
         }
 
-        if(this.line !== 'none') {
+        if(this.line !== 'none' && filtered_points.length !== 0) {
             element = this.createElement('path', {'class': 'line', 'stroke': this.graphs[graph], 'stroke-width': 2, 'fill': 'none', 'd': 'M '+filtered_points[0].x+' '+filtered_points[0].y+' '+path});
             if(this.line === 'dashed') {
                 element.setAttribute('style', 'stroke-dasharray: '+this.dashed_style);
