@@ -51,19 +51,8 @@ function Timeline(arg) {
     var obj = this;
     window.onresize = function() {
         old();
-
-        // Redraw the Timeline to fit the new size
-        if(obj.g !== false) {
-            obj.g.setAttribute('transform', 'translate(0, ' + obj.parent_holder.offsetHeight + ') scale(1, -1)');
-            if(obj.x_axis === true) {
-                obj.axis.setAttribute('x2', obj.parent_holder.offsetWidth - obj.marginLeft - 3 - obj.marginRight);
-            }
-            [].forEach.call(obj.holder.querySelectorAll('.label, .over, .point, .line, .graph, .legend_x'), function(el) {
-                el.parentNode.removeChild(el);
-            });
-            obj.draw();
-        }
-    };
+        obj.resize(obj.parent_holder.offsetWidth, obj.parent_holder.offsetHeight);
+    }
 
     if(!document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Image", "1.1")) {
         alert("ERROR : Your browser does not support embedded SVG.");
@@ -137,6 +126,19 @@ function Timeline(arg) {
     this.x_callback = arg.x_callback;
 }
 
+// Resize the SVG
+Timeline.prototype.resize = function(new_width, new_height) {
+    if(this.g !== false) {
+        this.g.setAttribute('transform', 'translate(0, ' + new_height + ') scale(1, -1)');
+        if(this.x_axis === true) {
+            this.axis.setAttribute('x2', new_width - this.marginLeft - 3 - this.marginRight);
+        }
+        [].forEach.call(this.holder.querySelectorAll('.label, .over, .point, .line, .graph, .legend_x'), function(el) {
+            el.parentNode.removeChild(el);
+        });
+        this.draw();
+    }
+};
 
 // Create an element "element" with the attributes "attrs"
 Timeline.prototype.createElement = function (element, attrs) {
@@ -225,7 +227,7 @@ Timeline.prototype.newCoordinate = function(value, min, max, minValue, maxValue)
 Timeline.prototype.getNewXY = function (minX, maxX, minY, maxY) {
     var obj = this;
     return function (x, y) {
-        return { 
+        return {
             'x': obj.newCoordinate(x, minX, maxX, obj.marginLeft, obj.parent_holder.offsetWidth - obj.marginRight),
             'y': obj.newCoordinate(y, minY, maxY, 2*obj.marginBottom, obj.parent_holder.offsetHeight - obj.marginTop)
         };
@@ -238,19 +240,19 @@ Timeline.prototype.getControlPoints = function (data) {
     var p1 = new Array();
 	var p2 = new Array();
 	var n = data.length - 1;
-	
+
 	/*rhs vector*/
 	var a = new Array();
 	var b = new Array();
 	var c = new Array();
 	var r = new Array();
-	
+
 	/*left most segment*/
 	a[0] = 0;
 	b[0] = 2;
 	c[0] = 1;
 	r[0] = data[0] + 2*data[1];
-	
+
 	/*internal segments*/
 	for (var i = 1; i < n - 1; i++) {
         a[i] = 1;
@@ -258,13 +260,13 @@ Timeline.prototype.getControlPoints = function (data) {
         c[i] = 1;
         r[i] = 4 * data[i] + 2 * data[i+1];
 	}
-			
+
 	/*right segment*/
 	a[n-1] = 2;
 	b[n-1] = 7;
 	c[n-1] = 0;
 	r[n-1] = 8*data[n-1] + data[n];
-	
+
 	/*solves Ax=b with the Thomas algorithm (from Wikipedia)*/
     var m;
 	for (var i = 1; i < n; i++) {
@@ -272,19 +274,19 @@ Timeline.prototype.getControlPoints = function (data) {
 		b[i] = b[i] - m * c[i - 1];
 		r[i] = r[i] - m*r[i-1];
 	}
- 
+
 	p1[n-1] = r[n-1]/b[n-1];
 	for (var i = n - 2; i >= 0; --i) {
 		p1[i] = (r[i] - c[i] * p1[i+1]) / b[i];
     }
-		
+
 	/*we have p1, now compute p2*/
 	for (var i=0;i<n-1;i++) {
 		p2[i] = 2*data[i+1] - p1[i+1];
     }
-	
+
 	p2[n-1] = 0.5*(data[n] + p1[n-1]);
-	
+
 	return {p1:p1, p2:p2};
 };
 
@@ -580,7 +582,7 @@ Timeline.prototype.draw = function() {
                 }
                 element.setAttribute('x', x_text);
                 element.setAttribute('y', y_text);
-    
+
 
                 g.setAttribute('display', 'none');
             }
